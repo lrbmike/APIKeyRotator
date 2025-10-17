@@ -2,8 +2,7 @@
 
 这是为 **API Key Rotator** 项目配套开发的前端管理后台。它提供了一个简洁、直观的用户界面，用于完成所有代理服务的配置和密钥管理。
 
-
-*(您可以使用这张我们之前讨论过的截图，或者替换成您最终界面的截图)*
+<img width="1989" height="627" alt="api_key_rotator_frontend" src="https://github.com/user-attachments/assets/dc8b932c-8073-438d-8126-a936fbefba73" />
 
 ## 技术栈
 
