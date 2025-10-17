@@ -1,5 +1,7 @@
 # API Key Rotator
 
+[English](README.md) | [中文简体](README_CN.md)
+
 ## 项目简介
 
 **API Key Rotator** 是一个基于 Go (Gin) 构建的强大而灵活的API密钥管理与请求代理解决方案。它旨在集中化管理您所有第三方API的密钥，并通过一个统一的代理入口，实现密钥的自动轮询、负载均衡和安全隔离。

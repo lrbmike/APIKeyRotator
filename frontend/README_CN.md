@@ -1,5 +1,7 @@
 # API Key Rotator - 前端管理界面
 
+[English](README.md) | [中文简体](README_CN.md)
+
 这是为 **API Key Rotator** 项目配套开发的前端管理后台。它提供了一个简洁、直观的用户界面，用于完成所有代理服务的配置和密钥管理。
 
 <img width="2160" height="558" alt="api_key_rotator_frontend" src="https://github.com/user-attachments/assets/64d49739-0363-4266-a4dd-ba7162446394" />

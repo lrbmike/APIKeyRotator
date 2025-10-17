@@ -1,5 +1,7 @@
 # Go后端服务 - API Key Rotator
 
+[English](README.md) | [中文简体](README_CN.md)
+
 本项目是 `API Key Rotator` 的后端服务，基于 **Gin** 框架构建，提供API密钥管理和请求代理功能。
 
 ## 架构概览
