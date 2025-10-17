@@ -3,6 +3,7 @@ version: '3.8'
 services:
 
   backend:
+    image: api-key-rotator-backend:latest
     build: 
       context: ./backend
       dockerfile: Dockerfile
@@ -29,6 +30,7 @@ services:
       - api-key-rotator-network
 
   frontend:
+    image: api-key-rotator-frontend:latest
     build:
       context: ./frontend
       dockerfile: Dockerfile

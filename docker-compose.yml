@@ -3,7 +3,8 @@ version: '3.8'
 services:
 
   backend:
-    build: 
+    image: api-key-rotator-backend:latest
+    build:
       context: ./backend
       dockerfile: Dockerfile
     ports:
@@ -31,6 +32,7 @@ services:
       - api-key-rotator-network
 
   frontend:
+    image: api-key-rotator-frontend:latest
     build:
       context: ./frontend
       dockerfile: Dockerfile
