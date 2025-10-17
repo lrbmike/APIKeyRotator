@@ -2,7 +2,7 @@
 
 本项目是 `API Key Rotator` 的后端服务，基于 **Gin** 框架构建，提供API密钥管理和请求代理功能。
 
-## 🏛️ 架构概览
+## 架构概览
 
 Go后端采用**清洁架构 (Clean Architecture)**设计模式，具有高度的规范性和扩展性。
 
@@ -10,7 +10,7 @@ Go后端采用**清洁架构 (Clean Architecture)**设计模式，具有高度�
 *   **业务逻辑**: 核心代理逻辑被抽象到`internal/services/`和`internal/adapters/`中，实现了代码的高度复用和逻辑解耦。
 *   **API路由**: 定义在`internal/handlers/`目录下，每个文件负责一个功能模块（管理、通用代理、LLM代理），职责清晰。
 
-## 📁 项目结构
+## 项目结构
 
 ```
 backend/
@@ -50,7 +50,7 @@ backend/
         └── gemini_adapter.go
 ```
 
-## 🚀 技术栈
+## 技术栈
 
 *   **框架**: [Gin](https://gin-gonic.com/) - 高性能HTTP Web框架
 *   **ORM**: [GORM](https://gorm.io/) - Go语言ORM库
@@ -59,17 +59,17 @@ backend/
 *   **配置**: 环境变量 + [godotenv](https://github.com/joho/godotenv)
 *   **容器化**: Docker + Docker Compose
 
-## ✨ 核心功能
+## 核心功能
 
-*   🔑 **集中化密钥管理**: 在Web界面统一管理所有服务的API密钥池
-*   🔄 **动态密钥轮询**: 基于Redis实现的原子性轮询，有效分摊API请求配额
-*   🛡️ **类型安全的代理**:
+*   **集中化密钥管理**: 在Web界面统一管理所有服务的API密钥池
+*   **动态密钥轮询**: 基于Redis实现的原子性轮询，有效分摊API请求配额
+*   **类型安全的代理**:
     *   **通用API代理 (`/proxy`)**: 为任何RESTful API提供代理服务
     *   **LLM API代理 (`/llm`)**: 为兼容OpenAI格式的大模型API提供原生流式支持
-*   📈 **高度可扩展架构**: 采用适配器模式，未来可轻松扩展支持任何新类型的LLM API
-*   🔒 **安全隔离**: 所有代理请求均通过全局密钥进行认证，保护后端真实密钥不被泄露
+*   **高度可扩展架构**: 采用适配器模式，未来可轻松扩展支持任何新类型的LLM API
+*   **安全隔离**: 所有代理请求均通过全局密钥进行认证，保护后端真实密钥不被泄露
 
-## 🔧 本地开发
+## 本地开发
 
 ### 环境要求
 
@@ -112,7 +112,7 @@ backend/
 *   **通用代理**: `http://localhost:8000/proxy/*` - 通用API代理
 *   **LLM代理**: `http://localhost:8000/llm/*` - LLM API代理
 
-## 🐳 Docker部署
+## Docker部署
 
 本项目通过根目录的 `docker-compose.yml` 文件进行部署，该文件已将此Go后端作为默认服务。
 
@@ -127,7 +127,7 @@ docker-compose build backend
 
 在项目根目录运行 `docker-compose up` 即可启动所有服务。
 
-## 🧪 测试
+## 测试
 
 ```bash
 # 运行所有测试
@@ -139,11 +139,3 @@ go test ./internal/handlers
 # 运行测试并显示覆盖率
 go test -cover ./...
 ```
-
-## 🤝 贡献
-
-欢迎提交Issue和Pull Request来改进这个项目！
-
-## 📄 许可证
-
-与主项目保持一致的许可证。

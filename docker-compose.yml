@@ -1,7 +1,7 @@
 version: '3.8'
 
 services:
-  # Go后端服务
+
   backend:
     build: 
       context: ./backend
@@ -30,7 +30,6 @@ services:
     networks:
       - api-key-rotator-network
 
-  # 前端服务 (开发模式)
   frontend:
     build:
       context: ./frontend
@@ -49,7 +48,6 @@ services:
     networks:
       - api-key-rotator-network
 
-  # MySQL数据库
   db:
     image: mysql:8.0.43
     environment:
@@ -69,7 +67,6 @@ services:
     networks:
       - api-key-rotator-network
 
-  # Redis缓存
   redis:
     image: redis:7.0.15-alpine
     command: >
