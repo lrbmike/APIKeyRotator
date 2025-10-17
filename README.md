@@ -1,138 +1,140 @@
 # API Key Rotator
 
-## 项目简介
+[English](README.md) | [中文简体](README_CN.md)
 
-**API Key Rotator** 是一个基于 Go (Gin) 构建的强大而灵活的API密钥管理与请求代理解决方案。它旨在集中化管理您所有第三方API的密钥，并通过一个统一的代理入口，实现密钥的自动轮询、负载均衡和安全隔离。
+## Introduction
 
-无论是为传统的RESTful API提供高可用性，还是为OpenAI等大模型API提供统一的、兼容SDK的访问点，本项目都能提供优雅且可扩展的解决方案。
+**API Key Rotator** is a powerful and flexible API key management and request proxy solution built with Go (Gin). It is designed to centralize the management of all your third-party API keys and provide automatic rotation, load balancing, and secure isolation through a unified proxy endpoint.
 
-该项目包含一个高性能的 **Go 后端** 和一个简洁易用的 **Vue 3 管理后台**，并通过 Docker Compose 实现了"一键式"部署。
+Whether you need to provide high availability for traditional RESTful APIs or a unified, SDK-compatible access point for large model APIs like OpenAI, this project offers an elegant and scalable solution.
 
-## 核心功能
+The project includes a high-performance **Go backend** and a simple, easy-to-use **Vue 3 admin panel**, with "one-click" deployment via Docker Compose.
 
-*   **集中化密钥管理**: 在Web界面统一管理所有服务的API密钥池。
-*   **动态密钥轮询**: 基于Redis实现的原子性轮询，有效分摊API请求配额。
-*   **类型安全的代理**:
-    *   **通用API代理 (`/proxy`)**: 为任何RESTful API提供代理服务。
-    *   **LLM API代理 (`/llm`)**: 为兼容OpenAI格式的大模型API提供原生流式支持和SDK友好的`base_url`。
-*   **高度可扩展架构**: 后端采用适配器模式，未来可轻松扩展支持任何新类型的代理服务。
-*   **安全隔离**: 所有代理请求均通过全局密钥进行认证，支持配置多个密钥，保护后端真实密钥不被泄露。
-*   **Docker化部署**: 提供完整的 Docker Compose 配置，一键启动后端、前端、数据库和 Redis。
+## Core Features
 
-## 快速开始
+*   **Centralized Key Management**: Manage API key pools for all services in a unified web interface.
+*   **Dynamic Key Rotation**: Atomic rotation based on Redis to effectively distribute API request quotas.
+*   **Type-Safe Proxies**:
+    *   **Generic API Proxy (`/proxy`)**: Provides proxy services for any RESTful API.
+    *   **LLM API Proxy (`/llm`)**: Offers native streaming support and an SDK-friendly `base_url` for OpenAI-compatible large model APIs.
+*   **Highly Extensible Architecture**: The backend uses an adapter pattern, making it easy to extend support for new types of proxy services in the future.
+*   **Secure Isolation**: All proxy requests are authenticated via global keys, with support for multiple keys to protect real backend keys from being exposed.
+*   **Dockerized Deployment**: Provides a complete Docker Compose configuration for one-click startup of the backend, frontend, database, and Redis.
 
-本项目已完全容器化，推荐使用 Docker Compose 进行一键部署和开发。
+## Quick Start
 
-### 1. 环境准备
+This project is fully containerized, and it is recommended to use Docker Compose for one-click deployment and development.
 
-确保您的系统中已经安装了 [Docker](https://www.docker.com/) 和 [Docker Compose](https://docs.docker.com/compose/install/)。
+### 1. Prerequisites
 
-### 2. 配置项目
+Ensure that [Docker](https://www.docker.com/) and [Docker Compose](https://docs.docker.com/compose/install/) are installed on your system.
 
-克隆本项目后，在项目根目录下，从 `.env.example` 模板创建一个 `.env` 文件。
+### 2. Configure the Project
+
+After cloning the project, create a `.env` file from the `.env.example` template in the project root directory.
 
 ```bash
-# 复制配置文件模板
+# Copy the configuration file template
 cp .env.example .env
 ```
 
-然后，根据你的需要编辑 `.env` 文件，至少需要设置数据库密码和管理员密码等敏感信息。
+Then, edit the `.env` file according to your needs, at least setting sensitive information such as the database password and administrator password.
 
-#### 代理密钥配置
+#### Proxy Key Configuration
 
-本项目使用 `GLOBAL_PROXY_KEYS` 环境变量配置代理认证密钥，支持单个密钥或多个密钥：
+This project uses the `GLOBAL_PROXY_KEYS` environment variable to configure proxy authentication keys, supporting a single key or multiple keys:
 
-1.  **单个密钥**:
+1.  **Single Key**:
     ```bash
     GLOBAL_PROXY_KEYS=your_secret_key
     ```
 
-2.  **多个密钥** (推荐用于多客户端场景):
+2.  **Multiple Keys** (Recommended for multi-client scenarios):
     ```bash
     GLOBAL_PROXY_KEYS=key1,key2,key3
     ```
 
-多个密钥功能允许您为不同的客户端或服务分配不同的认证密钥，提高安全性和管理灵活性。
+The multiple keys feature allows you to assign different authentication keys to different clients or services, improving security and management flexibility.
 
-### 3. 启动服务
+### 3. Start the Services
 
-我们提供了标准的 Docker Compose 配置，支持开发和生产环境。
+We provide standard Docker Compose configurations for development and production environments.
 
-**开发环境**
+**Development Environment**
 ```bash
-# 使用开发环境配置启动
+# Start with the development environment configuration
 docker-compose up --build -d
 ```
 
-**生产环境**
+**Production Environment**
 ```bash
-# 使用生产环境配置启动
+# Start with the production environment configuration
 docker-compose -f docker-compose.prod.yml up --build -d
 ```
 
-#### 访问地址
+#### Access URLs
 
-**开发环境** (使用 Vite 和热重载):
-*   **前端开发服务器**: `http://localhost:5173`
-*   **后端 API 根路径**: `http://localhost:8000/`
+**Development Environment** (with Vite and Hot Reload):
+*   **Frontend Dev Server**: `http://localhost:5173`
+*   **Backend API Root**: `http://localhost:8000/`
 
-**生产环境** (使用 Nginx):
-*   **Web 应用 (前端 + 后端 API)**: `http://localhost` (或 `http://localhost:80`，取决于你的 `.env` 配置)
+**Production Environment** (with Nginx):
+*   **Web Application (Frontend + Backend API)**: `http://localhost` (or `http://localhost:80`, depending on your `.env` configuration)
 
-## 🔧 非 Docker 本地开发 (可选)
+## 🔧 Local Development Without Docker (Optional)
 
-如果你希望在不使用 Docker 的情况下，在本地直接运行和调试源代码，可以遵循以下步骤。
+If you prefer to run and debug the source code directly on your local machine without using Docker, you can follow these steps.
 
-### 1. 环境准备
+### 1. Prerequisites
 
-*   安装 [Node.js](https://nodejs.org/) (18+)
-*   安装 [Go](https://golang.org/) (1.21+)
-*   在本地安装并运行 **MySQL** 和 **Redis** 服务
+*   Install [Node.js](https://nodejs.org/) (18+)
+*   Install [Go](https://golang.org/) (1.21+)
+*   Install and run **MySQL** and **Redis** services locally
 
-### 2. 启动后端服务
+### 2. Start the Backend Service
 
-1.  **进入Go后端目录**
+1.  **Enter the Go backend directory**
     ```bash
     cd backend/
     ```
 
-2.  **安装依赖**
+2.  **Install dependencies**
     ```bash
     go mod download
     ```
 
-3.  **配置环境变量**
-    在项目根目录创建 `.env` 文件（参考 `.env.example`），并配置数据库和 Redis 的连接信息。
+3.  **Configure environment variables**
+    Create a `.env` file in the project root (refer to `.env.example`) and configure the connection information for the database and Redis.
 
-4.  **启动后端服务器**
+4.  **Start the backend server**
     ```bash
     go run main.go
     ```
-    服务将在 `http://127.0.0.1:8000` 上运行。
+    The service will run at `http://127.0.0.1:8000`.
 
-### 3. 启动前端服务
+### 3. Start the Frontend Service
 
-1.  **进入前端目录** (在另一个终端中)
+1.  **Enter the frontend directory** (in another terminal)
     ```bash
     cd frontend/
     ```
 
-2.  **安装依赖**
+2.  **Install dependencies**
     ```bash
     npm install
     ```
 
-3.  **启动前端服务器**
+3.  **Start the frontend server**
     ```bash
     npm run dev
     ```
-    Vite 会自动处理 API 代理。服务将在 `http://localhost:5173` 上运行。
+    Vite will automatically handle API proxying. The service will run at `http://localhost:5173`.
 
-现在，你可以通过 `http://localhost:5173` 访问管理后台。
+Now, you can access the admin panel at `http://localhost:5173`.
 
-## 开发指南
+## Development Guide
 
-如果您希望深入代码功能，请参考以下文档：
+If you want to dive deeper into the code, please refer to the following documents:
 
-*   **[后端开发指南](./backend/README.md)**
-*   **[前端开发指南](./frontend/README.md)**
+*   **[Backend Development Guide](./backend/README.md)**
+*   **[Frontend Development Guide](./frontend/README.md)**

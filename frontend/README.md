@@ -1,84 +1,86 @@
-# API Key Rotator - 前端管理界面
+# API Key Rotator - Frontend Admin Interface
 
-这是为 **API Key Rotator** 项目配套开发的前端管理后台。它提供了一个简洁、直观的用户界面，用于完成所有代理服务的配置和密钥管理。
+[English](README.md) | [中文简体](README_CN.md)
+
+This is the frontend admin panel developed for the **API Key Rotator** project. It provides a clean and intuitive user interface for configuring all proxy services and managing keys.
 
 <img width="2160" height="558" alt="api_key_rotator_frontend" src="https://github.com/user-attachments/assets/64d49739-0363-4266-a4dd-ba7162446394" />
 
-## 技术栈
+## Tech Stack
 
-*   **框架**: [Vue 3](https://vuejs.org/) (使用 Composition API 和 `<script setup>`)
-*   **构建工具**: [Vite](https://vitejs.dev/)
-*   **UI组件库**: [Element Plus](https://element-plus.org/)
-*   **路由**: [Vue Router 4](https://router.vuejs.org/)
-*   **HTTP请求**: [Axios](https://axios-http.com/)
+*   **Framework**: [Vue 3](https://vuejs.org/) (using Composition API and `<script setup>`)
+*   **Build Tool**: [Vite](https://vitejs.dev/)
+*   **UI Component Library**: [Element Plus](https://element-plus.org/)
+*   **Routing**: [Vue Router 4](https://router.vuejs.org/)
+*   **HTTP Requests**: [Axios](https://axios-http.com/)
 
-## 功能列表
+## Feature List
 
-*   **用户认证**: 基于`.env`配置的后台登录与登出功能。
-*   **仪表盘**: 统一的仪表盘，以表格形式清晰展示所有已配置的代理服务（通用API和LLM API）。
-*   **服务配置CRUD**:
-    *   **创建**: 通过动态表单创建新的通用API或LLM API服务。
-    *   **读取**: 实时从后端获取并展示服务列表。
-    *   **更新**: 编辑已存在的服务配置。
-    *   **状态切换**: 快速启用或禁用某个服务，并有安全确认提示。
-*   **密钥管理 (CRUD)**:
-    *   为指定的服务**查看**已配置的密钥列表（脱敏显示）。
-    *   **添加**新的API Key。
-    *   **更新**密钥的启用/禁用状态。
-    *   **删除**指定的API Key，并有安全确认提示。
-*   **一键复制**: 快速复制每个代理服务的调用地址到剪贴板。
+*   **User Authentication**: Login and logout functionality based on the `.env` configuration.
+*   **Dashboard**: A unified dashboard that clearly displays all configured proxy services (Generic API and LLM API) in a table format.
+*   **Service Configuration CRUD**:
+    *   **Create**: Create new Generic API or LLM API services through a dynamic form.
+    *   **Read**: Fetch and display the list of services from the backend in real-time.
+    *   **Update**: Edit existing service configurations.
+    *   **Status Toggle**: Quickly enable or disable a service with a security confirmation prompt.
+*   **Key Management (CRUD)**:
+    *   **View** the list of configured keys for a specific service (with sensitive information redacted).
+    *   **Add** a new API Key.
+    *   **Update** the enabled/disabled status of a key.
+    *   **Delete** a specific API Key with a security confirmation prompt.
+*   **One-Click Copy**: Quickly copy the invocation address of each proxy service to the clipboard.
 
-## 项目结构
+## Project Structure
 
-前端代码位于`frontend/`目录下，其核心源代码结构如下：
+The frontend code is located in the `frontend/` directory. Its core source code structure is as follows:
 
 ```
 frontend/
 └── src/
-    ├── api/          # 存放所有与后端交互的 Axios API 请求函数。
-    ├── components/   # 可复用的UI组件 (如 KeyManager.vue)。
-    ├── router/       # Vue Router配置，包括路由表和导航守卫。
-    ├── views/        # 页面级组件 (如 Login.vue, Dashboard.vue, Layout.vue)。
-    ├── App.vue       # Vue应用的根组件。
-    └── main.js       # 应用的入口文件，用于初始化Vue、Element Plus和路由。
+    ├── api/          # Stores all Axios API request functions for backend interaction.
+    ├── components/   # Reusable UI components (e.g., KeyManager.vue).
+    ├── router/       # Vue Router configuration, including the routing table and navigation guards.
+    ├── views/        # Page-level components (e.g., Login.vue, Dashboard.vue, Layout.vue).
+    ├── App.vue       # The root component of the Vue application.
+    └── main.js       # The application's entry point for initializing Vue, Element Plus, and the router.
 ```
 
-## 开发与部署
+## Development and Deployment
 
-本项目已完全容器化，无论是开发还是生产部署，都通过 Docker 和 Docker Compose 进行管理，无需在本地安装 Node.js 环境。
+This project is fully containerized. Both development and production deployment are managed through Docker and Docker Compose, eliminating the need to install a Node.js environment locally.
 
-### 启动开发环境
+### Starting the Development Environment
 
-请参考**项目根目录**下的 `README.md` 或 `backend/README.md` 中关于本地开发的说明。核心步骤如下：
+Please refer to the instructions on local development in the **project root's** `README.md` or `backend/README.md`. The core steps are as follows:
 
-1.  在项目根目录创建并配置好 `.env` 文件。
-2.  在项目根目录运行 `docker-compose up --build`。
+1.  Create and configure the `.env` file in the project root.
+2.  Run `docker-compose up --build` in the project root.
 
-Docker Compose 会自动完成所有工作，包括：
-*   构建前端开发镜像 (`target: development`)。
-*   安装所有 npm 依赖。
-*   启动 Vite 开发服务器。
+Docker Compose will handle everything automatically, including:
+*   Building the frontend development image (`target: development`).
+*   Installing all npm dependencies.
+*   Starting the Vite development server.
 
-启动后，你可以通过 `http://localhost:5173` 访问前端应用。由于源码被挂载到容器中，任何对 `frontend/src` 目录下的文件修改都会触发**热重载**。
+After startup, you can access the frontend application at `http://localhost:5173`. Since the source code is mounted into the container, any changes to files in the `frontend/src` directory will trigger **hot reloading**.
 
-### 生产环境部署
+### Production Deployment
 
-生产环境的部署同样由 Docker Compose (`docker-compose.prod.yml`) 管理。
+Production deployment is also managed by Docker Compose (`docker-compose.prod.yml`).
 
-当执行 `docker-compose -f docker-compose.prod.yml up --build` 时，Docker 会执行 `frontend/Dockerfile` 中的生产构建流程：
-1.  **构建阶段 (`builder`)**: 在一个临时的容器中，执行 `npm run build`，生成优化的静态文件到 `/app/dist` 目录。
-2.  **生产阶段 (`production`)**:
-    *   使用一个非常轻量的 `nginx:alpine` 镜像作为最终镜像。
-    *   将上一个阶段生成的 `/app/dist` 目录下的所有静态文件，复制到 Nginx 的网站根目录 `/usr/share/nginx/html`。
-    *   将项目中的 `nginx.conf` 配置文件复制到容器中，用于处理 API 反向代理和 Vue Router 的 history 模式。
+When you run `docker-compose -f docker-compose.prod.yml up --build`, Docker executes the production build process in `frontend/Dockerfile`:
+1.  **Build Stage (`builder`)**: In a temporary container, `npm run build` is executed to generate optimized static files in the `/app/dist` directory.
+2.  **Production Stage (`production`)**:
+    *   A very lightweight `nginx:alpine` image is used as the final image.
+    *   All static files from the `/app/dist` directory of the previous stage are copied to the Nginx web root `/usr/share/nginx/html`.
+    *   The project's `nginx.conf` file is copied into the container to handle API reverse proxying and Vue Router's history mode.
 
-最终，一个只包含 Nginx 和静态文件的、高度优化的镜像被创建并运行，提供了高性能和高安全性的前端服务。
+Ultimately, a highly optimized image containing only Nginx and static files is created and run, providing a high-performance and secure frontend service.
 
-## Dockerfile 解析
+## Dockerfile Explained
 
-`frontend/Dockerfile` 采用了**多阶段构建 (Multi-stage builds)** 策略，这是一个最佳实践，可以同时保证开发时的便利性和生产镜像的轻量化。
+The `frontend/Dockerfile` uses a **Multi-stage builds** strategy, which is a best practice that ensures both development convenience and a lightweight production image.
 
-*   **`base` & `dependencies` 阶段**: 基础环境和依赖安装。这一层被后续多个阶段共享，可以有效利用 Docker 的层缓存。
-*   **`development` 阶段**: 用于本地开发。它直接使用 `dependencies` 阶段的结果，并运行 `npm run dev` 启动 Vite 服务器。`docker-compose.yml` 会选用这个阶段。
-*   **`builder` 阶段**: 专门用于执行 `npm run build`，生成生产环境的静态文件。
-*   **`production` 阶段**: 最终的生产镜像。它只从 `builder` 阶段拷贝构建产物，完全不包含 Node.js、npm 或源代码，因此镜像体积非常小。`docker-compose.prod.yml` 会选用这个阶段。
+*   **`base` & `dependencies` Stages**: Base environment and dependency installation. This layer is shared by subsequent stages, effectively utilizing Docker's layer caching.
+*   **`development` Stage**: Used for local development. It directly uses the result of the `dependencies` stage and runs `npm run dev` to start the Vite server. `docker-compose.yml` selects this stage.
+*   **`builder` Stage**: Specifically for running `npm run build` to generate static files for the production environment.
+*   **`production` Stage**: The final production image. It only copies the build artifacts from the `builder` stage and contains no Node.js, npm, or source code, resulting in a very small image size. `docker-compose.prod.yml` selects this stage.
