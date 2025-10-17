@@ -18,12 +18,12 @@ const authApiClient = () => {
 
 // --- 认证 API ---
 export const login = (username, password) => {
-  const params = new URLSearchParams()
-  params.append('username', username)
-  params.append('password', password)
-  return axios.post('/api/admin/login', params, {
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
-  })
+  const payload = {
+    username: username,
+    password: password
+  };
+  // 当axios的post请求第二个参数是对象时，它会自动设置Content-Type为application/json
+  return axios.post('/api/admin/login', payload);
 }
 
 
