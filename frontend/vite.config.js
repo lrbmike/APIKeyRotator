@@ -1,5 +1,6 @@
 import { defineConfig, loadEnv } from 'vite'
 import vue from '@vitejs/plugin-vue'
+import path from 'path'
 
 // https://vitejs.dev/config/
 // 将整个导出对象包裹在一个函数中，这样 Vite 会将 mode 传递进来
@@ -13,6 +14,11 @@ export default defineConfig(({ mode }) => {
   // 返回最终的配置对象
   return {
     plugins: [vue()],
+    resolve: {
+      alias: {
+        '@': path.resolve(__dirname, 'src')
+      }
+    },
     server: {
       // 监听所有网络接口，以便 Docker 容器的端口可以被映射出去
       host: '0.0.0.0', 

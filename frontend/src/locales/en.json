@@ -1,0 +1,114 @@
+{
+    "test": "Test",
+    "layout": {
+        "title": "API Key Rotator",
+        "logout": "Logout"
+    },
+    "login": {
+        "title": "API Key Rotator Login",
+        "usernamePlaceholder": "Username",
+        "passwordPlaceholder": "Password",
+        "loginButton": "Login",
+        "usernameRequired": "Please enter username",
+        "passwordRequired": "Please enter password",
+        "loginSuccess": "Login successful!",
+        "loginFailed": "Login failed, please check username and password"
+    },
+    "dashboard": {
+        "title": "Proxy Service Configuration",
+        "createButton": "Create New Service",
+        "editTitle": "Edit Proxy Service",
+        "createTitle": "Create Proxy Service",
+        "enableConfirm": "Are you sure you want to enable this service?",
+        "disableConfirm": "Are you sure you want to disable this service?",
+        "table": {
+            "id": "ID",
+            "name": "Service Name",
+            "slug": "Service Slug",
+            "type": "Type",
+            "targetUrl": "Target URL",
+            "status": "Status",
+            "actions": "Actions"
+        },
+        "actions": {
+            "copy": "Copy URL",
+            "edit": "Edit",
+            "manageKeys": "Manage Keys"
+        },
+        "form": {
+            "type": "Service Type",
+            "genericApi": "Generic API",
+            "llmApi": "LLM API",
+            "name": "Service Name",
+            "namePlaceholder": "e.g., Official OpenAI Production",
+            "slug": "Service Slug",
+            "slugPlaceholder": "e.g., openai-prod (globally unique, lowercase letters and - only)",
+            "method": "Request Method",
+            "methodPlaceholder": "Select request method",
+            "targetUrl": "Target URL",
+            "targetUrlPlaceholder": "https://api.weatherstack.com/current",
+            "apiFormat": "API Format",
+            "apiFormatPlaceholder": "Select API format",
+            "openaiCompatible": "OpenAI Compatible",
+            "geminiNative": "Gemini Native",
+            "targetBaseUrl": "Target Base URL",
+            "targetBaseUrlPlaceholder": "https://api.openai.com/v1",
+            "keyLocation": "Key Location",
+            "keyLocationPlaceholder": "Select key injection location",
+            "keyName": "Key Name",
+            "keyNamePlaceholder": "e.g., Authorization or access_key",
+            "cancel": "Cancel",
+            "confirm": "Confirm",
+            "validation": {
+                "type": "Please select a service type",
+                "name": "Please enter a service name",
+                "slug": "Please enter a service slug",
+                "method": "Please select a request method",
+                "targetUrl": "Please enter a target URL",
+                "targetBaseUrl": "Please enter a target Base URL",
+                "keyLocation": "Please select a key location",
+                "keyName": "Please enter a key name"
+            }
+        },
+        "messages": {
+            "loadFailed": "Failed to load configuration list",
+            "updateSuccess": "Update successful!",
+            "createSuccess": "Creation successful!",
+            "updateFailed": "Update failed, please check your input or the console",
+            "createFailed": "Creation failed, please check your input or the console",
+            "appConfigFailed": "Failed to get application configuration",
+            "statusUpdateSuccess": "Status updated successfully!",
+            "statusUpdateFailed": "Failed to update status",
+            "copyBaseUrlMissing": "Proxy domain is not configured, cannot copy",
+            "copySuccess": "Copied: {url}",
+            "copyFailed": "Copy failed, please check browser permissions or copy manually"
+        }
+    },
+    "keyManager": {
+        "title": "Manage Keys - {name}",
+        "newKey": "New API Key",
+        "placeholder": "Enter the full API Key",
+        "add": "Add",
+        "deleteConfirm": "Are you sure you want to delete this key?",
+        "delete": "Delete",
+        "table": {
+            "id": "ID",
+            "key": "API Key (Masked)",
+            "status": "Status",
+            "actions": "Actions"
+        },
+        "messages": {
+            "loadFailed": "Failed to load key list",
+            "keyRequired": "Please enter an API Key",
+            "addSuccess": "Added successfully!",
+            "addFailed": "Failed to add",
+            "statusUpdateSuccess": "Status updated successfully!",
+            "statusUpdateFailed": "Failed to update status",
+            "deleteSuccess": "Deleted successfully!",
+            "deleteFailed": "Failed to delete"
+        }
+    },
+    "langSwitcher": {
+        "label": "Language"
+    }
+}

@@ -1,35 +1,35 @@
 <template>
   <div>
     <div class="header-bar">
-      <h1>代理服务配置</h1>
-      <el-button type="primary" @click="openCreateDialog">创建新服务</el-button>
+      <h1>{{ $t('dashboard.title') }}</h1>
+      <el-button type="primary" @click="openCreateDialog">{{ $t('dashboard.createButton') }}</el-button>
     </div>
 
     <el-table :data="configs" v-loading="loading" style="width: 100%">
-      <el-table-column prop="id" label="ID" width="80" />
-      <el-table-column prop="name" label="服务名称" />
-      <el-table-column prop="slug" label="服务标识 (Slug)" />
-      <el-table-column prop="config_type" label="类型">
+      <el-table-column prop="id" :label="$t('dashboard.table.id')" width="80" />
+      <el-table-column prop="name" :label="$t('dashboard.table.name')" />
+      <el-table-column prop="slug" :label="$t('dashboard.table.slug')" />
+      <el-table-column prop="config_type" :label="$t('dashboard.table.type')">
         <template #default="scope">
           <el-tag :type="scope.row.config_type === 'LLM' ? 'success' : 'primary'">
             {{ scope.row.config_type }}
           </el-tag>
         </template>
       </el-table-column>
-      <el-table-column label="目标地址" width="400">
+      <el-table-column :label="$t('dashboard.table.targetUrl')" width="400">
          <template #default="scope">
           <span class="target-url">{{ scope.row.config_type === 'LLM' ? scope.row.target_base_url : scope.row.target_url }}</span>
         </template>
       </el-table-column>
-      <el-table-column prop="is_active" label="状态">
+      <el-table-column prop="is_active" :label="$t('dashboard.table.status')">
          <template #default="scope">
            <el-popconfirm
-             :title="`确定要'${scope.row.is_active ? '禁用' : '启用'}'这个服务吗?`"
+             :title="scope.row.is_active ? $t('dashboard.disableConfirm') : $t('dashboard.enableConfirm')"
              width="220"
              @confirm="handleStatusChange(scope.row)"
            >
              <template #reference>
-                <!-- 
+                <!--
                   我们在这里加一个div来阻止switch的默认点击行为,
                   因为点击事件将由Popconfirm来触发。
                 -->
@@ -40,12 +40,12 @@
            </el-popconfirm>
          </template>
        </el-table-column>
-       <el-table-column label="操作" width="280">
+       <el-table-column :label="$t('dashboard.table.actions')" width="280">
          <template #default="scope">
           <div class="action-buttons-horizontal">
-            <el-button size="small" type="primary" @click="handleCopy(scope.row)">复制地址</el-button>
-            <el-button size="small" @click="handleEdit(scope.row)">编辑</el-button>
-            <el-button size="small" type="primary" @click="openKeyManager(scope.row)">管理Key</el-button>
+            <el-button size="small" type="primary" @click="handleCopy(scope.row)">{{ $t('dashboard.actions.copy') }}</el-button>
+            <el-button size="small" @click="handleEdit(scope.row)">{{ $t('dashboard.actions.edit') }}</el-button>
+            <el-button size="small" type="primary" @click="openKeyManager(scope.row)">{{ $t('dashboard.actions.manageKeys') }}</el-button>
            </div>
          </template>
        </el-table-column>
@@ -53,65 +53,65 @@
 
     <!-- 创建/编辑对话框 -->
     <el-dialog v-model="dialogVisible" :title="dialogTitle" width="50%" @close="resetForm">
-      <el-form ref="configFormRef" :model="configForm" :rules="formRules" label-width="120px">
-        <el-form-item label="服务类型" prop="config_type">
+      <el-form ref="configFormRef" :model="configForm" :rules="formRules" label-position="top" label-width="auto">
+        <el-form-item :label="$t('dashboard.form.type')" prop="config_type">
           <el-radio-group v-model="configForm.config_type" :disabled="isEditMode">
-            <el-radio-button label="GENERIC">通用API</el-radio-button>
-            <el-radio-button label="LLM">LLM API</el-radio-button>
+            <el-radio-button label="GENERIC">{{ $t('dashboard.form.genericApi') }}</el-radio-button>
+            <el-radio-button label="LLM">{{ $t('dashboard.form.llmApi') }}</el-radio-button>
           </el-radio-group>
         </el-form-item>
         
-        <el-form-item label="服务名称" prop="name">
-          <el-input v-model="configForm.name" placeholder="例如：官方OpenAI生产环境" />
+        <el-form-item :label="$t('dashboard.form.name')" prop="name">
+          <el-input v-model="configForm.name" :placeholder="$t('dashboard.form.namePlaceholder')" />
         </el-form-item>
-        <el-form-item label="服务标识 (Slug)" prop="slug">
-          <el-input v-model="configForm.slug" placeholder="例如：openai-prod (全局唯一, 只能是小写字母和-)" />
+        <el-form-item :label="$t('dashboard.form.slug')" prop="slug">
+          <el-input v-model="configForm.slug" :placeholder="$t('dashboard.form.slugPlaceholder')" />
         </el-form-item>
         
         <!-- 通用API专属字段 -->
         <div v-if="configForm.config_type === 'GENERIC'">
-          <el-form-item label="请求方法" prop="method">
-            <el-select v-model="configForm.method" placeholder="选择请求方法">
+          <el-form-item :label="$t('dashboard.form.method')" prop="method">
+            <el-select v-model="configForm.method" :placeholder="$t('dashboard.form.methodPlaceholder')">
               <el-option label="GET" value="GET" />
               <el-option label="POST" value="POST" />
               <el-option label="PUT" value="PUT" />
               <el-option label="DELETE" value="DELETE" />
             </el-select>
           </el-form-item>
-          <el-form-item label="目标URL" prop="target_url">
-            <el-input v-model="configForm.target_url" placeholder="https://api.weatherstack.com/current" />
+          <el-form-item :label="$t('dashboard.form.targetUrl')" prop="target_url">
+            <el-input v-model="configForm.target_url" :placeholder="$t('dashboard.form.targetUrlPlaceholder')" />
           </el-form-item>
         </div>
 
         <!-- LLM API专属字段 -->
         <div v-if="configForm.config_type === 'LLM'">
-          <el-form-item label="API 格式" prop="api_format">
-            <el-select v-model="configForm.api_format" placeholder="选择API格式">
-              <el-option label="OpenAI Compatible" value="openai_compatible" />
-              <el-option label="Gemini Native" value="gemini_native" />
+          <el-form-item :label="$t('dashboard.form.apiFormat')" prop="api_format">
+            <el-select v-model="configForm.api_format" :placeholder="$t('dashboard.form.apiFormatPlaceholder')">
+              <el-option :label="$t('dashboard.form.openaiCompatible')" value="openai_compatible" />
+              <el-option :label="$t('dashboard.form.geminiNative')" value="gemini_native" />
             </el-select>
           </el-form-item>
 
-          <el-form-item label="目标Base URL" prop="target_base_url">
-            <el-input v-model="configForm.target_base_url" placeholder="https://api.openai.com/v1" />
+          <el-form-item :label="$t('dashboard.form.targetBaseUrl')" prop="target_base_url">
+            <el-input v-model="configForm.target_base_url" :placeholder="$t('dashboard.form.targetBaseUrlPlaceholder')" />
           </el-form-item>
         </div>
 
-        <el-form-item label="密钥位置" prop="api_key_location">
-           <el-select v-model="configForm.api_key_location" placeholder="选择密钥注入位置">
+        <el-form-item :label="$t('dashboard.form.keyLocation')" prop="api_key_location">
+           <el-select v-model="configForm.api_key_location" :placeholder="$t('dashboard.form.keyLocationPlaceholder')">
               <el-option label="Header" value="header" />
               <el-option label="Query" value="query" />
             </el-select>
         </el-form-item>
-        <el-form-item label="密钥名称" prop="api_key_name">
-          <el-input v-model="configForm.api_key_name" placeholder="例如：Authorization 或 access_key" />
+        <el-form-item :label="$t('dashboard.form.keyName')" prop="api_key_name">
+          <el-input v-model="configForm.api_key_name" :placeholder="$t('dashboard.form.keyNamePlaceholder')" />
         </el-form-item>
       </el-form>
       <template #footer>
         <span class="dialog-footer">
-          <el-button @click="dialogVisible = false">取消</el-button>
+          <el-button @click="dialogVisible = false">{{ $t('dashboard.form.cancel') }}</el-button>
           <el-button type="primary" @click="submitForm" :loading="formLoading">
-            确认
+            {{ $t('dashboard.form.confirm') }}
           </el-button>
         </span>
       </template>
@@ -129,15 +129,18 @@
 
 <script setup>
 import { ref, onMounted, reactive, computed } from 'vue'
-import { 
-  getAllConfigs, 
+import { useI18n } from 'vue-i18n'
+import {
+  getAllConfigs,
   createProxyConfig,
   updateProxyConfig,
   getAppConfig,
   updateConfigStatus
-} from '../api' 
+} from '../api'
 import { ElMessage } from 'element-plus'
 import KeyManager from '../components/KeyManager.vue'
+
+const { t } = useI18n()
 
 const configs = ref([])
 const loading = ref(true)
@@ -146,7 +149,7 @@ const dialogMode = ref('create') // 'create' or 'edit'
 const editingConfigId = ref(null)
 
 const isEditMode = computed(() => dialogMode.value === 'edit')
-const dialogTitle = computed(() => isEditMode.value ? '编辑代理服务' : '创建代理服务')
+const dialogTitle = computed(() => isEditMode.value ? t('dashboard.editTitle') : t('dashboard.createTitle'))
 
 // 对话框相关
 const dialogVisible = ref(false)
@@ -169,14 +172,14 @@ const configForm = reactive({ ...initialFormState })
 
 // 表单校验规则
 const formRules = computed(() => ({
-  config_type: [{ required: true, message: '请选择服务类型' }],
-  name: [{ required: true, message: '请输入服务名称', trigger: 'blur' }],
-  slug: [{ required: true, message: '请输入服务标识', trigger: 'blur' }],
-  method: [{ required: configForm.config_type === 'GENERIC', message: '请选择请求方法' }],
-  target_url: [{ required: configForm.config_type === 'GENERIC', message: '请输入目标URL', trigger: 'blur' }],
-  target_base_url: [{ required: configForm.config_type === 'LLM', message: '请输入目标Base URL', trigger: 'blur' }],
-  api_key_location: [{ required: true, message: '请选择密钥位置' }],
-  api_key_name: [{ required: true, message: '请输入密钥名称', trigger: 'blur' }],
+  config_type: [{ required: true, message: t('dashboard.form.validation.type') }],
+  name: [{ required: true, message: t('dashboard.form.validation.name'), trigger: 'blur' }],
+  slug: [{ required: true, message: t('dashboard.form.validation.slug'), trigger: 'blur' }],
+  method: [{ required: configForm.config_type === 'GENERIC', message: t('dashboard.form.validation.method') }],
+  target_url: [{ required: configForm.config_type === 'GENERIC', message: t('dashboard.form.validation.targetUrl'), trigger: 'blur' }],
+  target_base_url: [{ required: configForm.config_type === 'LLM', message: t('dashboard.form.validation.targetBaseUrl'), trigger: 'blur' }],
+  api_key_location: [{ required: true, message: t('dashboard.form.validation.keyLocation') }],
+  api_key_name: [{ required: true, message: t('dashboard.form.validation.keyName'), trigger: 'blur' }],
 }))
 
 const keyManagerVisible = ref(false)
@@ -201,7 +204,7 @@ const fetchConfigs = async () => {
     const response = await getAllConfigs()
     configs.value = response.data
   } catch (error) {
-    ElMessage.error('加载配置列表失败')
+    ElMessage.error(t('dashboard.messages.loadFailed'))
   } finally {
     loading.value = false
   }
@@ -241,17 +244,17 @@ const submitForm = async () => {
         if (isEditMode.value) {
           // --- 编辑逻辑 ---
           await updateProxyConfig(editingConfigId.value, payload);
-          ElMessage.success('更新成功！');
+          ElMessage.success(t('dashboard.messages.updateSuccess'));
         } else {
           // --- 创建逻辑 ---
           await createProxyConfig(payload);
-          ElMessage.success('创建成功！');
+          ElMessage.success(t('dashboard.messages.createSuccess'));
         }
 
         dialogVisible.value = false;
         fetchConfigs(); // 重新加载列表
       } catch (error) {
-        ElMessage.error(`${isEditMode.value ? '更新' : '创建'}失败，请检查输入或查看控制台`);
+        ElMessage.error(isEditMode.value ? t('dashboard.messages.updateFailed') : t('dashboard.messages.createFailed'));
         console.error(error);
       } finally {
         formLoading.value = false;
@@ -276,7 +279,7 @@ const fetchAppConfig = async () => {
     const response = await getAppConfig();
     appConfig.value = response.data;
   } catch (error) {
-    ElMessage.error('获取应用配置失败');
+    ElMessage.error(t('dashboard.messages.appConfigFailed'));
     console.error(error);
   }
 }
@@ -293,9 +296,9 @@ const handleStatusChange = async (row) => {
     // API调用成功后，才更新前端UI
     row.is_active = newStatus;
     
-    ElMessage.success('状态更新成功！');
+    ElMessage.success(t('dashboard.messages.statusUpdateSuccess'));
   } catch (error) {
-    ElMessage.error('状态更新失败');
+    ElMessage.error(t('dashboard.messages.statusUpdateFailed'));
     console.error(error);
     // 如果API调用失败，前端UI不会改变，保持原状
   }
@@ -303,7 +306,7 @@ const handleStatusChange = async (row) => {
 
 const handleCopy = (row) => {
   if (!appConfig.value.proxy_public_base_url) {
-    ElMessage.error('代理域名未配置，无法复制');
+    ElMessage.error(t('dashboard.messages.copyBaseUrlMissing'));
     return;
   }
 
@@ -324,11 +327,11 @@ const handleCopy = (row) => {
     // 使用 Clipboard API 进行复制，这是现代浏览器的标准做法
     navigator.clipboard.writeText(proxyUrl).then(() => {
       ElMessage.success({
-        message: `已复制: ${proxyUrl}`,
+        message: t('dashboard.messages.copySuccess', { url: proxyUrl }),
         duration: 2000 // 消息显示2秒
       });
     }).catch(err => {
-      ElMessage.error('复制失败，请检查浏览器权限或手动复制');
+      ElMessage.error(t('dashboard.messages.copyFailed'));
       console.error('Could not copy text: ', err);
     });
   } else {
@@ -352,14 +355,14 @@ const handleCopy = (row) => {
       
       if (successful) {
         ElMessage.success({
-          message: `已复制: ${proxyUrl}`,
+          message: t('dashboard.messages.copySuccess', { url: proxyUrl }),
           duration: 2000 // 消息显示2秒
         });
       } else {
-        ElMessage.error('复制失败，请手动复制');
+        ElMessage.error(t('dashboard.messages.copyFailed'));
       }
     } catch (err) {
-      ElMessage.error('复制失败，请手动复制');
+      ElMessage.error(t('dashboard.messages.copyFailed'));
       console.error('Could not copy text: ', err);
     }
   }

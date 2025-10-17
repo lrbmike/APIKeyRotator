@@ -1,0 +1,114 @@
+{
+    "test": "测试",
+    "layout": {
+        "title": "API 密钥轮换器",
+        "logout": "退出登录"
+    },
+    "login": {
+        "title": "API Key Rotator 登录",
+        "usernamePlaceholder": "用户名",
+        "passwordPlaceholder": "密码",
+        "loginButton": "登 录",
+        "usernameRequired": "请输入用户名",
+        "passwordRequired": "请输入密码",
+        "loginSuccess": "登录成功！",
+        "loginFailed": "登录失败，请检查用户名和密码"
+    },
+    "dashboard": {
+        "title": "代理服务配置",
+        "createButton": "创建新服务",
+        "editTitle": "编辑代理服务",
+        "createTitle": "创建代理服务",
+        "enableConfirm": "确定要启用这个服务吗?",
+        "disableConfirm": "确定要禁用这个服务吗?",
+        "table": {
+            "id": "ID",
+            "name": "服务名称",
+            "slug": "服务标识 (Slug)",
+            "type": "类型",
+            "targetUrl": "目标地址",
+            "status": "状态",
+            "actions": "操作"
+        },
+        "actions": {
+            "copy": "复制地址",
+            "edit": "编辑",
+            "manageKeys": "管理Key"
+        },
+        "form": {
+            "type": "服务类型",
+            "genericApi": "通用API",
+            "llmApi": "LLM API",
+            "name": "服务名称",
+            "namePlaceholder": "例如：官方OpenAI生产环境",
+            "slug": "服务标识 (Slug)",
+            "slugPlaceholder": "例如：openai-prod (全局唯一, 只能是小写字母和-)",
+            "method": "请求方法",
+            "methodPlaceholder": "选择请求方法",
+            "targetUrl": "目标URL",
+            "targetUrlPlaceholder": "https://api.weatherstack.com/current",
+            "apiFormat": "API 格式",
+            "apiFormatPlaceholder": "选择API格式",
+            "openaiCompatible": "OpenAI Compatible",
+            "geminiNative": "Gemini Native",
+            "targetBaseUrl": "目标Base URL",
+            "targetBaseUrlPlaceholder": "https://api.openai.com/v1",
+            "keyLocation": "密钥位置",
+            "keyLocationPlaceholder": "选择密钥注入位置",
+            "keyName": "密钥名称",
+            "keyNamePlaceholder": "例如：Authorization 或 access_key",
+            "cancel": "取消",
+            "confirm": "确认",
+            "validation": {
+                "type": "请选择服务类型",
+                "name": "请输入服务名称",
+                "slug": "请输入服务标识",
+                "method": "请选择请求方法",
+                "targetUrl": "请输入目标URL",
+                "targetBaseUrl": "请输入目标Base URL",
+                "keyLocation": "请选择密钥位置",
+                "keyName": "请输入密钥名称"
+            }
+        },
+        "messages": {
+            "loadFailed": "加载配置列表失败",
+            "updateSuccess": "更新成功！",
+            "createSuccess": "创建成功！",
+            "updateFailed": "更新失败，请检查输入或查看控制台",
+            "createFailed": "创建失败，请检查输入或查看控制台",
+            "appConfigFailed": "获取应用配置失败",
+            "statusUpdateSuccess": "状态更新成功！",
+            "statusUpdateFailed": "状态更新失败",
+            "copyBaseUrlMissing": "代理域名未配置，无法复制",
+            "copySuccess": "已复制: {url}",
+            "copyFailed": "复制失败，请检查浏览器权限或手动复制"
+        }
+    },
+    "keyManager": {
+        "title": "管理密钥 - {name}",
+        "newKey": "新API Key",
+        "placeholder": "请输入完整的API Key",
+        "add": "添加",
+        "deleteConfirm": "确定要删除这个Key吗?",
+        "delete": "删除",
+        "table": {
+            "id": "ID",
+            "key": "API Key (脱敏)",
+            "status": "状态",
+            "actions": "操作"
+        },
+        "messages": {
+            "loadFailed": "加载密钥列表失败",
+            "keyRequired": "请输入API Key",
+            "addSuccess": "添加成功！",
+            "addFailed": "添加失败",
+            "statusUpdateSuccess": "状态更新成功！",
+            "statusUpdateFailed": "状态更新失败",
+            "deleteSuccess": "删除成功！",
+            "deleteFailed": "删除失败"
+        }
+    },
+    "langSwitcher": {
+        "label": "语言切换"
+    }
+}

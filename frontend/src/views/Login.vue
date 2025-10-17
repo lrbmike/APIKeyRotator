@@ -3,19 +3,19 @@
     <el-card class="login-card">
       <template #header>
         <div class="card-header">
-          <span>API Key Rotator 登录</span>
+          <span>{{ $t('login.title') }}</span>
         </div>
       </template>
       <el-form ref="loginFormRef" :model="loginForm" :rules="loginRules" @submit.prevent>
         <el-form-item prop="username">
-          <el-input v-model="loginForm.username" placeholder="用户名" />
+          <el-input v-model="loginForm.username" :placeholder="$t('login.usernamePlaceholder')" />
         </el-form-item>
         <el-form-item prop="password">
-          <el-input v-model="loginForm.password" type="password" placeholder="密码" show-password />
+          <el-input v-model="loginForm.password" type="password" :placeholder="$t('login.passwordPlaceholder')" show-password />
         </el-form-item>
         <el-form-item>
           <el-button type="primary" @click="handleLogin" :loading="loading" style="width: 100%;">
-            登 录
+            {{ $t('login.loginButton') }}
           </el-button>
         </el-form-item>
       </el-form>
@@ -24,10 +24,13 @@
 </template>
 
 <script setup>
-import { ref, reactive } from 'vue'
+import { ref, reactive, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { login } from '../api'
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
 
 const router = useRouter()
 const loginFormRef = ref(null)
@@ -38,10 +41,10 @@ const loginForm = reactive({
   password: ''
 })
 
-const loginRules = {
-  username: [{ required: true, message: '请输入用户名', trigger: 'blur' }],
-  password: [{ required: true, message: '请输入密码', trigger: 'blur' }]
-}
+const loginRules = computed(() => ({
+  username: [{ required: true, message: t('login.usernameRequired'), trigger: 'blur' }],
+  password: [{ required: true, message: t('login.passwordRequired'), trigger: 'blur' }]
+}))
 
 const handleLogin = async () => {
   await loginFormRef.value.validate(async (valid) => {
@@ -51,11 +54,11 @@ const handleLogin = async () => {
         const response = await login(loginForm.username, loginForm.password)
         if (response.data.access_token) {
           localStorage.setItem('authToken', response.data.access_token)
-          ElMessage.success('登录成功！')
+          ElMessage.success(t('login.loginSuccess'))
           router.push({ name: 'Dashboard' })
         }
       } catch (error) {
-        ElMessage.error('登录失败，请检查用户名和密码')
+        ElMessage.error(t('login.loginFailed'))
       } finally {
         loading.value = false
       }

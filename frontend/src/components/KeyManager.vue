@@ -1,37 +1,37 @@
 <template>
-  <el-dialog v-model="visible" :title="`管理密钥 - ${configName}`" width="60%" @close="handleClose">
+  <el-dialog v-model="visible" :title="t('keyManager.title', { name: configName })" width="60%" @close="handleClose">
     
     <!-- 添加新Key的表单 -->
     <el-form :inline="true" :model="newKeyForm" class="add-key-form">
-      <el-form-item label="新API Key">
-        <el-input v-model="newKeyForm.key_value" placeholder="请输入完整的API Key" style="width: 400px;"/>
+      <el-form-item :label="t('keyManager.newKey')">
+        <el-input v-model="newKeyForm.key_value" :placeholder="t('keyManager.placeholder')" style="width: 400px;"/>
       </el-form-item>
       <el-form-item>
-        <el-button type="primary" @click="handleAddNewKey" :loading="addLoading">添加</el-button>
+        <el-button type="primary" @click="handleAddNewKey" :loading="addLoading">{{ t('keyManager.add') }}</el-button>
       </el-form-item>
     </el-form>
 
     <!-- Key列表 -->
     <el-table :data="keys" v-loading="loading">
-      <el-table-column prop="id" label="ID" width="80" />
-      <el-table-column label="API Key (脱敏)">
+      <el-table-column prop="id" :label="t('keyManager.table.id')" width="80" />
+      <el-table-column :label="t('keyManager.table.key')">
         <template #default="scope">
           <span>{{ maskApiKey(scope.row.key_value) }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="状态" width="120">
+      <el-table-column :label="t('keyManager.table.status')" width="120">
         <template #default="scope">
-          <el-switch 
-            :model-value="scope.row.is_active" 
+          <el-switch
+            :model-value="scope.row.is_active"
             @change="handleStatusChange(scope.row)"
           />
         </template>
       </el-table-column>
-      <el-table-column label="操作" width="120">
+      <el-table-column :label="t('keyManager.table.actions')" width="120">
         <template #default="scope">
-          <el-popconfirm title="确定要删除这个Key吗?" @confirm="handleDeleteKey(scope.row.id)">
+          <el-popconfirm :title="t('keyManager.deleteConfirm')" @confirm="handleDeleteKey(scope.row.id)">
             <template #reference>
-              <el-button size="small" type="danger">删除</el-button>
+              <el-button size="small" type="danger">{{ t('keyManager.delete') }}</el-button>
             </template>
           </el-popconfirm>
         </template>
@@ -45,6 +45,9 @@
 import { ref, reactive, watch } from 'vue'
 import { getKeysForConfig, addApiKeyToConfig, updateApiKeyStatus, deleteApiKey } from '../api'
 import { ElMessage } from 'element-plus'
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
 
 const props = defineProps({
   modelValue: Boolean, // 控制对话框显示
@@ -80,7 +83,7 @@ const fetchKeys = async () => {
     const response = await getKeysForConfig(props.configId)
     keys.value = response.data
   } catch (error) {
-    ElMessage.error('加载密钥列表失败')
+    ElMessage.error(t('keyManager.messages.loadFailed'))
   } finally {
     loading.value = false
   }
@@ -88,17 +91,17 @@ const fetchKeys = async () => {
 
 const handleAddNewKey = async () => {
   if (!newKeyForm.key_value.trim()) {
-    ElMessage.warning('请输入API Key');
+    ElMessage.warning(t('keyManager.messages.keyRequired'));
     return;
   }
   addLoading.value = true
   try {
     await addApiKeyToConfig(props.configId, newKeyForm);
-    ElMessage.success('添加成功！');
+    ElMessage.success(t('keyManager.messages.addSuccess'));
     newKeyForm.key_value = ''; // 清空输入框
     await fetchKeys(); // 重新加载列表
   } catch (error) {
-    ElMessage.error('添加失败');
+    ElMessage.error(t('keyManager.messages.addFailed'));
   } finally {
     addLoading.value = false
   }
@@ -110,21 +113,21 @@ const handleStatusChange = async (row) => {
   row.is_active = !originalStatus
   try {
     await updateApiKeyStatus(row.id, row.is_active)
-    ElMessage.success('状态更新成功！')
+    ElMessage.success(t('keyManager.messages.statusUpdateSuccess'))
   } catch (error) {
     // 回滚UI
     row.is_active = originalStatus
-    ElMessage.error('状态更新失败')
+    ElMessage.error(t('keyManager.messages.statusUpdateFailed'))
   }
 }
 
 const handleDeleteKey = async (keyId) => {
   try {
     await deleteApiKey(keyId);
-    ElMessage.success('删除成功！');
+    ElMessage.success(t('keyManager.messages.deleteSuccess'));
     await fetchKeys(); // 重新加载列表
   } catch (error) {
-    ElMessage.error('删除失败');
+    ElMessage.error(t('keyManager.messages.deleteFailed'));
   }
 }
 
