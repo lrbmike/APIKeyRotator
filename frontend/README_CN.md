@@ -13,6 +13,7 @@
 *   **UI组件库**: [Element Plus](https://element-plus.org/)
 *   **路由**: [Vue Router 4](https://router.vuejs.org/)
 *   **HTTP请求**: [Axios](https://axios-http.com/)
+*   **国际化 (i18n)**: [Vue I18n](https://vue-i18n.intlify.dev/)
 
 ## 功能列表
 
@@ -29,6 +30,7 @@
     *   **更新**密钥的启用/禁用状态。
     *   **删除**指定的API Key，并有安全确认提示。
 *   **一键复制**: 快速复制每个代理服务的调用地址到剪贴板。
+*   **多语言支持**: 支持中英文无缝切换。
 
 ## 项目结构
 
@@ -38,11 +40,13 @@
 frontend/
 └── src/
     ├── api/          # 存放所有与后端交互的 Axios API 请求函数。
-    ├── components/   # 可复用的UI组件 (如 KeyManager.vue)。
+    ├── components/   # 可复用的UI组件 (如 KeyManager.vue, LangSwitcher.vue)。
+    ├── locales/      # 存放国际化语言包文件 (如 en.json, zh-CN.json)。
     ├── router/       # Vue Router配置，包括路由表和导航守卫。
     ├── views/        # 页面级组件 (如 Login.vue, Dashboard.vue, Layout.vue)。
     ├── App.vue       # Vue应用的根组件。
-    └── main.js       # 应用的入口文件，用于初始化Vue、Element Plus和路由。
+    ├── i18n.js       # vue-i18n 的配置文件。
+    └── main.js       # 应用的入口文件，用于初始化Vue、Element Plus、i18n和路由。
 ```
 
 ## 开发与部署

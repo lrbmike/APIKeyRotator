@@ -13,6 +13,7 @@ This is the frontend admin panel developed for the **API Key Rotator** project. 
 *   **UI Component Library**: [Element Plus](https://element-plus.org/)
 *   **Routing**: [Vue Router 4](https://router.vuejs.org/)
 *   **HTTP Requests**: [Axios](https://axios-http.com/)
+*   **Internationalization (i18n)**: [Vue I18n](https://vue-i18n.intlify.dev/)
 
 ## Feature List
 
@@ -29,6 +30,7 @@ This is the frontend admin panel developed for the **API Key Rotator** project. 
     *   **Update** the enabled/disabled status of a key.
     *   **Delete** a specific API Key with a security confirmation prompt.
 *   **One-Click Copy**: Quickly copy the invocation address of each proxy service to the clipboard.
+*   **Multi-language Support**: Supports seamless switching between Chinese and English.
 
 ## Project Structure
 
@@ -38,11 +40,13 @@ The frontend code is located in the `frontend/` directory. Its core source code 
 frontend/
 └── src/
     ├── api/          # Stores all Axios API request functions for backend interaction.
-    ├── components/   # Reusable UI components (e.g., KeyManager.vue).
+    ├── components/   # Reusable UI components (e.g., KeyManager.vue, LangSwitcher.vue).
+    ├── locales/      # Stores language files for internationalization (e.g., en.json, zh-CN.json).
     ├── router/       # Vue Router configuration, including the routing table and navigation guards.
     ├── views/        # Page-level components (e.g., Login.vue, Dashboard.vue, Layout.vue).
     ├── App.vue       # The root component of the Vue application.
-    └── main.js       # The application's entry point for initializing Vue, Element Plus, and the router.
+    ├── i18n.js       # Configuration file for vue-i18n.
+    └── main.js       # The application's entry point for initializing Vue, Element Plus, i18n, and the router.
 ```
 
 ## Development and Deployment

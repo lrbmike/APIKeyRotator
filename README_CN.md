@@ -81,7 +81,7 @@ docker-compose -f docker-compose.prod.yml up --build -d
 **生产环境** (使用 Nginx):
 *   **Web 应用 (前端 + 后端 API)**: `http://localhost` (或 `http://localhost:80`，取决于你的 `.env` 配置)
 
-## 🔧 非 Docker 本地开发 (可选)
+## 非 Docker 本地开发 (可选)
 
 如果你希望在不使用 Docker 的情况下，在本地直接运行和调试源代码，可以遵循以下步骤。
 

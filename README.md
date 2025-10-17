@@ -81,7 +81,7 @@ docker-compose -f docker-compose.prod.yml up --build -d
 **Production Environment** (with Nginx):
 *   **Web Application (Frontend + Backend API)**: `http://localhost` (or `http://localhost:80`, depending on your `.env` configuration)
 
-## 🔧 Local Development Without Docker (Optional)
+## Local Development Without Docker (Optional)
 
 If you prefer to run and debug the source code directly on your local machine without using Docker, you can follow these steps.
 
