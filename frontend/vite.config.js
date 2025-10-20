@@ -38,7 +38,7 @@ export default defineConfig(({ mode }) => {
           // 那么就不需要 rewrite。
           // 如果后端路由是 /admin/login，而前端请求的是 /api/admin/login，
           // 那么就需要取消下面的注释来移除 /api 前缀。
-          // rewrite: (path) => path.replace(/^\/api/, ''),
+          rewrite: (path) => path.replace(/^\/api/, ''),
         }
       }
     }

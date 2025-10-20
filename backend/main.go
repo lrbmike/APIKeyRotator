@@ -57,7 +57,7 @@ func main() {
 	// 启动服务器
 	port := os.Getenv("BACKEND_PORT")
 	if port == "" {
-		port = "8002"
+		port = "8000"
 	}
 
 	log.Printf("Starting server on port %s", port)

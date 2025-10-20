@@ -61,7 +61,7 @@ func Setup(cfg *config.Config, db *gorm.DB, redisClient *redis.Client) *gin.Engi
 	})
 
 	// 管理API路由组
-	adminAPI := r.Group("/api/admin")
+	adminAPI := r.Group("/admin")
 	{
 		// 添加路由级别的调试中间件
 		adminAPI.Use(func(c *gin.Context) {
