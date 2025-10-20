@@ -55,8 +55,30 @@ func (a *AnthropicAdapter) ProcessRequest() (*services.TargetRequest, error) {
 	// 3. Build the target request.
 	headers := utils.FilterRequestHeaders(a.c.Request.Header, []string{"x-api-key"})
 
-	// Inject the real upstream key and the fixed anthropic-version.
-	headers["x-api-key"] = upstreamKey
+	// 优先使用数据库中为该proxyConfig保存的APIKeyName, 否则回退到默认值
+	keyName := "x-api-key"
+	if a.proxyConfig.APIKeyName != nil && *a.proxyConfig.APIKeyName != "" {
+		keyName = *a.proxyConfig.APIKeyName
+	}
+
+	// 优先使用数据库中为该proxyConfig保存的APIKeyLocation, 否则回退到默认值
+	keyLocation := "header"
+	if a.proxyConfig.APIKeyLocation != nil && *a.proxyConfig.APIKeyLocation != "" {
+		keyLocation = *a.proxyConfig.APIKeyLocation
+	}
+
+	// 根据keyLocation将key添加到headers或params
+	if keyLocation == "header" {
+		// Inject the real upstream key and the fixed anthropic-version.
+		headers[keyName] = upstreamKey
+	} else if keyLocation == "query" {
+		// 将key添加到查询参数
+		if a.c.Request.URL.RawQuery == "" {
+			a.c.Request.URL.RawQuery = fmt.Sprintf("%s=%s", keyName, upstreamKey)
+		} else {
+			a.c.Request.URL.RawQuery += fmt.Sprintf("&%s=%s", keyName, upstreamKey)
+		}
+	}
 	headers["anthropic-version"] = "2023-06-01"
 
 	baseURL := ""

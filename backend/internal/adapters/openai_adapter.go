@@ -89,8 +89,30 @@ func (a *OpenAIAdapter) ProcessRequest() (*services.TargetRequest, error) {
 	// 3. 构建目标请求 (偷梁换柱)
 	headers := utils.FilterRequestHeaders(a.c.Request.Header, []string{"authorization"})
 
-	// 添加真实的Authorization头
-	headers["Authorization"] = fmt.Sprintf("Bearer %s", upstreamKey)
+	// 优先使用数据库中为该proxyConfig保存的APIKeyName, 否则回退到默认值
+	keyName := "Authorization"
+	if a.proxyConfig.APIKeyName != nil && *a.proxyConfig.APIKeyName != "" {
+		keyName = *a.proxyConfig.APIKeyName
+	}
+
+	// 优先使用数据库中为该proxyConfig保存的APIKeyLocation, 否则回退到默认值
+	keyLocation := "header"
+	if a.proxyConfig.APIKeyLocation != nil && *a.proxyConfig.APIKeyLocation != "" {
+		keyLocation = *a.proxyConfig.APIKeyLocation
+	}
+
+	// 根据keyLocation将key添加到headers或params
+	if keyLocation == "header" {
+		// 添加真实的Authorization头
+		headers[keyName] = fmt.Sprintf("Bearer %s", upstreamKey)
+	} else if keyLocation == "query" {
+		// 将key添加到查询参数
+		if a.c.Request.URL.RawQuery == "" {
+			a.c.Request.URL.RawQuery = fmt.Sprintf("%s=%s", keyName, upstreamKey)
+		} else {
+			a.c.Request.URL.RawQuery += fmt.Sprintf("&%s=%s", keyName, upstreamKey)
+		}
+	}
 
 	// 从数据库获取配置好的基础URL，并移除末尾可能存在的斜杠
 	baseURL := ""

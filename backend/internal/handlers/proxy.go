@@ -108,10 +108,14 @@ func (h *ProxyHandler) prepareGenericRequest(handler *services.BaseProxyHandler)
 	}
 
 	// 7. 根据配置注入API密钥
-	if strings.ToLower(proxyConfig.APIKeyLocation) == "header" {
-		headers[proxyConfig.APIKeyName] = apiKey
-	} else if strings.ToLower(proxyConfig.APIKeyLocation) == "query" {
-		params[proxyConfig.APIKeyName] = apiKey
+	if proxyConfig.APIKeyLocation != nil && proxyConfig.APIKeyName != nil {
+		location := strings.ToLower(*proxyConfig.APIKeyLocation)
+		keyName := *proxyConfig.APIKeyName
+		if location == "header" {
+			headers[keyName] = apiKey
+		} else if location == "query" {
+			params[keyName] = apiKey
+		}
 	}
 
 	// 8. 读取请求体

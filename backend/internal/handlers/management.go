@@ -162,7 +162,7 @@ func (h *ManagementHandler) UpdateConfig(c *gin.Context) {
 	proxyConfig.TargetURL = req.TargetURL
 	proxyConfig.TargetBaseURL = req.TargetBaseURL
 	proxyConfig.APIFormat = req.APIFormat
-    // ConfigType 不应被更新
+	// ConfigType 不应被更新
 
 	if err := h.db.Save(&proxyConfig).Error; err != nil {
 		logger.Errorf("Failed to update proxy config: %v", err)
@@ -175,6 +175,35 @@ func (h *ManagementHandler) UpdateConfig(c *gin.Context) {
 
 	response := dto.ToProxyConfigResponse(&proxyConfig)
 	c.JSON(http.StatusOK, response)
+}
+
+// UpdateConfigStatus 更新代理配置的状态
+func (h *ManagementHandler) UpdateConfigStatus(c *gin.Context) {
+	id, err := h.parseID(c)
+	if err != nil {
+		return
+	}
+
+	var req dto.ProxyConfigStatusUpdate
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	var proxyConfig models.ProxyConfig
+	if err := h.db.First(&proxyConfig, id).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"detail": "ProxyConfig not found"})
+		return
+	}
+
+	proxyConfig.IsActive = req.IsActive
+	if err := h.db.Save(&proxyConfig).Error; err != nil {
+		logger.Errorf("Failed to update proxy config status: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update configuration status"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Status updated successfully"})
 }
 
 // DeleteConfig 删除代理配置

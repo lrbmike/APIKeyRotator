@@ -81,15 +81,6 @@
           <el-form-item :label="$t('dashboard.form.targetUrl')" prop="target_url">
             <el-input v-model="configForm.target_url" :placeholder="$t('dashboard.form.targetUrlPlaceholder')" />
           </el-form-item>
-          <el-form-item :label="$t('dashboard.form.keyLocation')" prop="api_key_location">
-            <el-select v-model="configForm.api_key_location" :placeholder="$t('dashboard.form.keyLocationPlaceholder')">
-              <el-option label="Header" value="header" />
-              <el-option label="Query" value="query" />
-            </el-select>
-          </el-form-item>
-          <el-form-item :label="$t('dashboard.form.keyName')" prop="api_key_name">
-            <el-input v-model="configForm.api_key_name" :placeholder="$t('dashboard.form.keyNamePlaceholder')" />
-          </el-form-item>
         </div>
 
         <!-- LLM API专属字段 -->
@@ -106,6 +97,16 @@
             <el-input v-model="configForm.target_base_url" :placeholder="$t('dashboard.form.targetBaseUrlPlaceholder')" />
           </el-form-item>
         </div>
+
+        <el-form-item :label="$t('dashboard.form.keyLocation')" prop="api_key_location">
+          <el-select v-model="configForm.api_key_location" :placeholder="llmKeyLocationPlaceholder">
+            <el-option label="Header" value="header" />
+            <el-option label="Query" value="query" />
+          </el-select>
+        </el-form-item>
+        <el-form-item :label="$t('dashboard.form.keyName')" prop="api_key_name">
+          <el-input v-model="configForm.api_key_name" :placeholder="llmKeyNamePlaceholder" />
+        </el-form-item>
       </el-form>
       <template #footer>
         <span class="dialog-footer">
@@ -150,6 +151,18 @@ const editingConfigId = ref(null)
 
 const isEditMode = computed(() => dialogMode.value === 'edit')
 const dialogTitle = computed(() => isEditMode.value ? t('dashboard.editTitle') : t('dashboard.createTitle'))
+
+const llmKeyLocationPlaceholder = computed(() => {
+  return configForm.config_type === 'LLM'
+    ? t('dashboard.form.keyLocationPlaceholderOptional')
+    : t('dashboard.form.keyLocationPlaceholder')
+})
+
+const llmKeyNamePlaceholder = computed(() => {
+  return configForm.config_type === 'LLM'
+    ? t('dashboard.form.keyNamePlaceholderOptional')
+    : t('dashboard.form.keyNamePlaceholder')
+})
 
 // 对话框相关
 const dialogVisible = ref(false)
@@ -233,10 +246,11 @@ const submitForm = async () => {
           name: configForm.name,
           slug: configForm.slug,
           config_type: configForm.config_type,
+          is_active: configForm.is_active,
           method: configForm.config_type === 'GENERIC' ? configForm.method : null,
           target_url: configForm.config_type === 'GENERIC' ? configForm.target_url : null,
-          api_key_location: configForm.config_type === 'GENERIC' ? configForm.api_key_location : null,
-          api_key_name: configForm.config_type === 'GENERIC' ? configForm.api_key_name : null,
+          api_key_location: configForm.api_key_location,
+          api_key_name: configForm.api_key_name,
           api_format: configForm.config_type === 'LLM' ? configForm.api_format : null,
           target_base_url: configForm.config_type === 'LLM' ? configForm.target_base_url : null,
         };

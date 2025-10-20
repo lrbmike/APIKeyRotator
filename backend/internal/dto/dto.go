@@ -24,13 +24,18 @@ type ProxyConfigCreate struct {
 	Name           string  `json:"name" binding:"required"`
 	Slug           string  `json:"slug" binding:"required"`
 	ConfigType     string  `json:"config_type" binding:"required"` // "generic" or "llm"
-	APIKeyLocation string  `json:"api_key_location" binding:"required"`
-	APIKeyName     string  `json:"api_key_name" binding:"required"`
+	APIKeyLocation *string `json:"api_key_location,omitempty"`
+	APIKeyName     *string `json:"api_key_name,omitempty"`
 	IsActive       bool    `json:"is_active"`
 	Method         *string `json:"method,omitempty"`
 	TargetURL      *string `json:"target_url,omitempty"`
 	TargetBaseURL  *string `json:"target_base_url,omitempty"`
 	APIFormat      *string `json:"api_format,omitempty"`
+}
+
+// ProxyConfigStatusUpdate 更新代理配置状态的请求
+type ProxyConfigStatusUpdate struct {
+	IsActive bool `json:"is_active"`
 }
 
 // APIKeyCreate 创建API密钥请求
@@ -50,8 +55,8 @@ type ProxyConfigResponse struct {
 	Name           string          `json:"name"`
 	Slug           string          `json:"slug"`
 	ConfigType     string          `json:"config_type"`
-	APIKeyLocation string          `json:"api_key_location"`
-	APIKeyName     string          `json:"api_key_name"`
+	APIKeyLocation *string         `json:"api_key_location,omitempty"`
+	APIKeyName     *string         `json:"api_key_name,omitempty"`
 	IsActive       bool            `json:"is_active"`
 	APIKeys        []models.APIKey `json:"api_keys"`
 	Method         *string         `json:"method,omitempty"`
@@ -62,18 +67,25 @@ type ProxyConfigResponse struct {
 
 // ToProxyConfigResponse 将模型转换为响应DTO
 func ToProxyConfigResponse(proxyConfig *models.ProxyConfig) ProxyConfigResponse {
-	return ProxyConfigResponse{
-		ID:             proxyConfig.ID,
-		Name:           proxyConfig.Name,
-		Slug:           proxyConfig.Slug,
-		ConfigType:     proxyConfig.ConfigType,
-		APIKeyLocation: proxyConfig.APIKeyLocation,
-		APIKeyName:     proxyConfig.APIKeyName,
-		IsActive:       proxyConfig.IsActive,
-		APIKeys:        proxyConfig.APIKeys,
-		Method:         proxyConfig.Method,
-		TargetURL:      proxyConfig.TargetURL,
-		TargetBaseURL:  proxyConfig.TargetBaseURL,
-		APIFormat:      proxyConfig.APIFormat,
+	resp := ProxyConfigResponse{
+		ID:            proxyConfig.ID,
+		Name:          proxyConfig.Name,
+		Slug:          proxyConfig.Slug,
+		ConfigType:    proxyConfig.ConfigType,
+		IsActive:      proxyConfig.IsActive,
+		APIKeys:       proxyConfig.APIKeys,
+		Method:        proxyConfig.Method,
+		TargetURL:     proxyConfig.TargetURL,
+		TargetBaseURL: proxyConfig.TargetBaseURL,
+		APIFormat:     proxyConfig.APIFormat,
 	}
+
+	if proxyConfig.APIKeyLocation != nil {
+		resp.APIKeyLocation = proxyConfig.APIKeyLocation
+	}
+	if proxyConfig.APIKeyName != nil {
+		resp.APIKeyName = proxyConfig.APIKeyName
+	}
+
+	return resp
 }

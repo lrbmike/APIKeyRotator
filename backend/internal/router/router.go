@@ -78,6 +78,7 @@ func Setup(cfg *config.Config, db *gorm.DB, redisClient *redis.Client) *gin.Engi
 		adminAPI.GET("/proxy-configs", managementHandler.GetAllConfigs)
 		adminAPI.GET("/proxy-configs/:id", managementHandler.GetConfigByID)
 		adminAPI.PUT("/proxy-configs/:id", managementHandler.UpdateConfig)
+		adminAPI.PUT("/proxy-configs/:id/status", managementHandler.UpdateConfigStatus)
 		adminAPI.DELETE("/proxy-configs/:id", managementHandler.DeleteConfig)
 
 		// API密钥管理

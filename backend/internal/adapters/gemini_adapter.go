@@ -55,8 +55,30 @@ func (a *GeminiAdapter) ProcessRequest() (*services.TargetRequest, error) {
 	// 3. 构建目标请求 (偷梁换柱)
 	headers := utils.FilterRequestHeaders(a.c.Request.Header, []string{"x-goog-api-key"})
 
-	// 注入真实的Gemini Key
-	headers["x-goog-api-key"] = upstreamKey
+	// 优先使用数据库中为该proxyConfig保存的APIKeyName, 否则回退到默认值
+	keyName := "x-goog-api-key"
+	if a.proxyConfig.APIKeyName != nil && *a.proxyConfig.APIKeyName != "" {
+		keyName = *a.proxyConfig.APIKeyName
+	}
+
+	// 优先使用数据库中为该proxyConfig保存的APIKeyLocation, 否则回退到默认值
+	keyLocation := "header"
+	if a.proxyConfig.APIKeyLocation != nil && *a.proxyConfig.APIKeyLocation != "" {
+		keyLocation = *a.proxyConfig.APIKeyLocation
+	}
+
+	// 根据keyLocation将key添加到headers或params
+	if keyLocation == "header" {
+		// 注入真实的Gemini Key
+		headers[keyName] = upstreamKey
+	} else if keyLocation == "query" {
+		// 将key添加到查询参数
+		if a.c.Request.URL.RawQuery == "" {
+			a.c.Request.URL.RawQuery = fmt.Sprintf("%s=%s", keyName, upstreamKey)
+		} else {
+			a.c.Request.URL.RawQuery += fmt.Sprintf("&%s=%s", keyName, upstreamKey)
+		}
+	}
 
 	// URL拼接方式也不同
 	baseURL := ""

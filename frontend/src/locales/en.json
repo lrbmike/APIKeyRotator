@@ -56,8 +56,10 @@
             "targetBaseUrlPlaceholder": "https://api.openai.com/v1",
             "keyLocation": "Key Location",
             "keyLocationPlaceholder": "Select key injection location",
+            "keyLocationPlaceholderOptional": "Leave blank to use adapter default",
             "keyName": "Key Name",
             "keyNamePlaceholder": "e.g., Authorization or access_key",
+            "keyNamePlaceholderOptional": "Leave blank to use adapter default",
             "cancel": "Cancel",
             "confirm": "Confirm",
             "validation": {

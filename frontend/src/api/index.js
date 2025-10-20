@@ -102,5 +102,5 @@ export const updateLlmConfig = (id, data) => {
 
 // 更新配置的状态
 export const updateConfigStatus = (id, isActive) => {
-  return apiClient.patch(`/proxy-configs/${id}/status`, { is_active: isActive });
+  return apiClient.put(`/proxy-configs/${id}/status`, { is_active: isActive });
 }

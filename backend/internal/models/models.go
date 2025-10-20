@@ -10,8 +10,8 @@ type ProxyConfig struct {
 	Name           string    `json:"name" gorm:"uniqueIndex;size:100;not null"`
 	Slug           string    `json:"slug" gorm:"uniqueIndex;size:100;not null"`
 	ConfigType     string    `json:"config_type" gorm:"size:50;not null;index"` // "generic" or "llm"
-	APIKeyLocation string    `json:"api_key_location" gorm:"size:50;not null"`
-	APIKeyName     string    `json:"api_key_name" gorm:"size:100;not null"`
+	APIKeyLocation *string   `json:"api_key_location,omitempty" gorm:"size:50"`
+	APIKeyName     *string   `json:"api_key_name,omitempty" gorm:"size:100"`
 	IsActive       bool      `json:"is_active" gorm:"default:true"`
 	CreatedAt      time.Time `json:"created_at" gorm:"autoCreateTime"`
 	UpdatedAt      time.Time `json:"updated_at" gorm:"autoUpdateTime"`
