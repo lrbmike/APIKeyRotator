@@ -51,6 +51,7 @@
             "apiFormatPlaceholder": "选择API格式",
             "openaiCompatible": "OpenAI Compatible",
             "geminiNative": "Gemini Native",
+            "anthropicNative": "Anthropic Native",
             "targetBaseUrl": "目标Base URL",
             "targetBaseUrlPlaceholder": "https://api.openai.com/v1",
             "keyLocation": "密钥位置",

@@ -51,6 +51,7 @@
             "apiFormatPlaceholder": "Select API format",
             "openaiCompatible": "OpenAI Compatible",
             "geminiNative": "Gemini Native",
+            "anthropicNative": "Anthropic Native",
             "targetBaseUrl": "Target Base URL",
             "targetBaseUrlPlaceholder": "https://api.openai.com/v1",
             "keyLocation": "Key Location",

@@ -89,6 +89,7 @@
             <el-select v-model="configForm.api_format" :placeholder="$t('dashboard.form.apiFormatPlaceholder')">
               <el-option :label="$t('dashboard.form.openaiCompatible')" value="openai_compatible" />
               <el-option :label="$t('dashboard.form.geminiNative')" value="gemini_native" />
+              <el-option :label="$t('dashboard.form.anthropicNative')" value="anthropic_native" />
             </el-select>
           </el-form-item>
 

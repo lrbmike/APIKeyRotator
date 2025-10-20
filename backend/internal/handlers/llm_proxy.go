@@ -82,6 +82,8 @@ func (h *LLMProxyHandler) prepareLLMRequest(c *gin.Context, slug, action string)
 		adapter = adapters.NewOpenAIAdapter(h.cfg, h.db, h.redisClient, c, &proxyConfig, action)
 	case "gemini_native":
 		adapter = adapters.NewGeminiAdapter(h.cfg, h.db, h.redisClient, c, &proxyConfig, action)
+	case "anthropic_native":
+		adapter = adapters.NewAnthropicAdapter(h.cfg, h.db, h.redisClient, c, &proxyConfig, action)
 	default:
 		logger.Errorf("No adapter found for API format '%s'", apiFormat)
 		return nil, fmt.Errorf("unsupported API format '%s' for LLM service '%s'", apiFormat, slug)
