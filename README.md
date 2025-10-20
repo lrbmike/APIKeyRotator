@@ -16,7 +16,7 @@ The project includes a high-performance **Go backend** and a simple, easy-to-use
 *   **Dynamic Key Rotation**: Atomic rotation based on Redis to effectively distribute API request quotas.
 *   **Type-Safe Proxies**:
     *   **Generic API Proxy (`/proxy`)**: Provides proxy services for any RESTful API.
-    *   **LLM API Proxy (`/llm`)**: Offers native streaming support and an SDK-friendly `base_url` for OpenAI-compatible large model APIs.
+    *   **LLM API Proxy (`/llm`)**: Offers native streaming support and an SDK-friendly `base_url` for large model APIs compatible with OpenAI's format. Supported providers include **OpenAI, Gemini, Anthropic**, etc.
 *   **Highly Extensible Architecture**: The backend uses an adapter pattern, making it easy to extend support for new types of proxy services in the future.
 *   **Secure Isolation**: All proxy requests are authenticated via global keys, with support for multiple keys to protect real backend keys from being exposed.
 *   **Dockerized Deployment**: Provides a complete Docker Compose configuration for one-click startup of the backend, frontend, database, and Redis.
@@ -131,6 +131,37 @@ If you prefer to run and debug the source code directly on your local machine wi
     Vite will automatically handle API proxying. The service will run at `http://localhost:5173`.
 
 Now, you can access the admin panel at `http://localhost:5173`.
+
+## Usage Example
+
+### LLM API Proxy
+
+Using the `openai` Python SDK as an example, combined with an `OpenRouter` model, you can use the proxy service by modifying the `base_url`.
+
+```python
+from openai import OpenAI
+
+client = OpenAI(
+  # Format: http://<PROXY_PUBLIC_BASE_URL>/llm/<Service Slug>
+  base_url="http://PROXY_PUBLIC_BASE_URL/llm/openrouter-api",
+  api_key="<GLOBAL_PROXY_KEY>",
+)
+
+completion = client.chat.completions.create(
+  # Please refer to the specific provider's documentation for model names
+  model="openai/gpt-4o",
+  messages=[
+    {
+      "role": "user",
+      "content": "What is the meaning of life?"
+    }
+  ]
+)
+
+print(completion.choices[0].message.content)
+```
+
+Where `PROXY_PUBLIC_BASE_URL` and `GLOBAL_PROXY_KEY` are the environment variables you configured in your `.env` file.
 
 ## Development Guide
 

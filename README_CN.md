@@ -16,7 +16,7 @@
 *   **动态密钥轮询**: 基于Redis实现的原子性轮询，有效分摊API请求配额。
 *   **类型安全的代理**:
     *   **通用API代理 (`/proxy`)**: 为任何RESTful API提供代理服务。
-    *   **LLM API代理 (`/llm`)**: 为兼容OpenAI格式的大模型API提供原生流式支持和SDK友好的`base_url`。
+    *   **LLM API代理 (`/llm`)**: 为兼容OpenAI格式的大模型API提供原生流式支持和SDK友好的`base_url`。目前支持的接口格式包括 **OpenAI, Gemini, Anthropic** 等。
 *   **高度可扩展架构**: 后端采用适配器模式，未来可轻松扩展支持任何新类型的代理服务。
 *   **安全隔离**: 所有代理请求均通过全局密钥进行认证，支持配置多个密钥，保护后端真实密钥不被泄露。
 *   **Docker化部署**: 提供完整的 Docker Compose 配置，一键启动后端、前端、数据库和 Redis。
@@ -131,6 +131,37 @@ docker-compose -f docker-compose.prod.yml up --build -d
     Vite 会自动处理 API 代理。服务将在 `http://localhost:5173` 上运行。
 
 现在，你可以通过 `http://localhost:5173` 访问管理后台。
+
+## 使用示例
+
+### LLM API 代理
+
+以 `openai` Python SDK 为例，结合使用 `OpenRouter` 模型，你可以通过修改 `base_url` 来使用本项目的代理服务。
+
+```python
+from openai import OpenAI
+
+client = OpenAI(
+  # 格式为 http://<PROXY_PUBLIC_BASE_URL>/llm/<服务标识 (Slug)>
+  base_url="http://PROXY_PUBLIC_BASE_URL/llm/openrouter-api",
+  api_key="<GLOBAL_PROXY_KEY>",
+)
+
+completion = client.chat.completions.create(
+  # 模型名称请参考具体提供商的文档
+  model="openai/gpt-4o",
+  messages=[
+    {
+      "role": "user",
+      "content": "What is the meaning of life?"
+    }
+  ]
+)
+
+print(completion.choices[0].message.content)
+```
+
+其中 `PROXY_PUBLIC_BASE_URL` 和 `GLOBAL_PROXY_KEY` 是您在 `.env` 文件中配置的环境变量。
 
 ## 开发指南
 
