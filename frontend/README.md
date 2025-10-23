@@ -4,7 +4,7 @@
 
 This is the frontend admin panel developed for the **API Key Rotator** project. It provides a clean and intuitive user interface for configuring all proxy services and managing keys.
 
-<img width="2172" height="648" alt="frontend_en" src="https://github.com/user-attachments/assets/17c6fee9-fb8c-4816-9734-3972159d6a7d" />
+<img width="2334" height="591" alt="frontend_en" src="https://github.com/user-attachments/assets/dcfd9580-60ea-475a-abd6-ccc07944a229" />
 
 ## Tech Stack
 
