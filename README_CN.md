@@ -163,6 +163,47 @@ print(completion.choices[0].message.content)
 
 其中 `PROXY_PUBLIC_BASE_URL` 和 `GLOBAL_PROXY_KEY` 是您在 `.env` 文件中配置的环境变量。
 
+### 通用 API 代理
+
+通用 API 代理可用于任何 RESTful API。以下是一个使用 Python requests 库调用天气 API 的示例：
+
+```python
+import requests
+
+# 配置代理参数
+proxy_url = "http://PROXY_PUBLIC_BASE_URL/proxy/weather/current"
+proxy_key = "<GLOBAL_PROXY_KEY>"
+
+# 查询参数
+params = {
+    "query": "London",
+    "access_key": "YOUR_ACCESS_KEY"  # 这个参数将被代理替换为轮询的真实API密钥
+}
+
+# 设置请求头
+headers = {
+    "X-Proxy-Key": proxy_key
+}
+
+# 发起请求
+response = requests.get(proxy_url, params=params, headers=headers)
+
+# 处理响应
+if response.status_code == 200:
+    data = response.json()
+    print(f"天气信息: {data}")
+else:
+    print(f"请求失败，状态码: {response.status_code}")
+```
+
+在这个示例中：
+1. `weather` 是您在管理界面配置的服务标识 (Slug)
+2. `current` 是目标API的路径
+3. `PROXY_PUBLIC_BASE_URL` 是您的代理服务地址
+4. `<GLOBAL_PROXY_KEY>` 是您配置的全局代理密钥之一
+
+代理会自动将请求转发到配置的目标URL，并将路径和查询参数附加到目标地址上。
+
 ## 开发指南
 
 如果您希望深入代码功能，请参考以下文档：

@@ -163,6 +163,47 @@ print(completion.choices[0].message.content)
 
 Where `PROXY_PUBLIC_BASE_URL` and `GLOBAL_PROXY_KEY` are the environment variables you configured in your `.env` file.
 
+### Generic API Proxy
+
+The Generic API Proxy can be used for any RESTful API. Here's an example of calling a weather API using Python requests library:
+
+```python
+import requests
+
+# Configure proxy parameters
+proxy_url = "http://PROXY_PUBLIC_BASE_URL/proxy/weather/current"
+proxy_key = "<GLOBAL_PROXY_KEY>"
+
+# Query parameters
+params = {
+    "query": "London",
+    "access_key": "YOUR_ACCESS_KEY"  # This parameter will be replaced by the real API key via rotation
+}
+
+# Set headers
+headers = {
+    "X-Proxy-Key": proxy_key
+}
+
+# Make the request
+response = requests.get(proxy_url, params=params, headers=headers)
+
+# Handle the response
+if response.status_code == 200:
+    data = response.json()
+    print(f"Weather information: {data}")
+else:
+    print(f"Request failed with status code: {response.status_code}")
+```
+
+In this example:
+1. `weather` is the service slug configured in the admin panel
+2. `current` is the path of the target API endpoint
+3. `PROXY_PUBLIC_BASE_URL` is your proxy service address
+4. `<GLOBAL_PROXY_KEY>` is one of the global proxy keys you configured
+
+The proxy will automatically forward the request to the configured target URL, appending the path and query parameters to the target address.
+
 ## Development Guide
 
 If you want to dive deeper into the code, please refer to the following documents:
