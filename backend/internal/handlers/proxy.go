@@ -39,24 +39,31 @@ func NewProxyHandler(cfg *config.Config, db *gorm.DB, redisClient *redis.Client)
 func (h *ProxyHandler) HandleGenericProxy(c *gin.Context) {
 	slug := strings.TrimPrefix(c.Param("slug"), "/")
 	
-	if err := services.ValidateSlug(slug); err != nil {
-		logger.Warningf("Bad Request for slug '%s': %v", slug, err)
+	// 提取服务标识符（第一个路径段）
+	parts := strings.SplitN(slug, "/", 2)
+	serviceSlug := parts[0]
+	
+	if err := services.ValidateSlug(serviceSlug); err != nil {
+		logger.Warningf("Bad Request for slug '%s': %v", serviceSlug, err)
 		c.JSON(http.StatusBadRequest, gin.H{"detail": err.Error()})
 		return
 	}
 
-	handler := services.NewBaseProxyHandler(h.cfg, h.db, h.redisClient, c, slug, "")
+	handler := services.NewBaseProxyHandler(h.cfg, h.db, h.redisClient, c, serviceSlug, "")
 	
 	targetRequest, err := h.prepareGenericRequest(handler)
 	if err != nil {
-		logger.Warningf("Bad Request for slug '%s': %v", slug, err)
+		logger.Warningf("Bad Request for slug '%s': %v", serviceSlug, err)
 		c.JSON(http.StatusBadRequest, gin.H{"detail": err.Error()})
 		return
 	}
+	
+	// 将完整的路径传递给转发函数
+	c.Set("fullPath", slug)
 
 	// 转发请求
 	if err := h.forwardRequest(c, targetRequest); err != nil {
-		logger.Errorf("An unexpected error occurred in GenericApiProxyHandler for slug '%s': %v", slug, err)
+		logger.Errorf("An unexpected error occurred in GenericApiProxyHandler for slug '%s': %v", serviceSlug, err)
 		c.JSON(http.StatusBadGateway, gin.H{"detail": "Bad Gateway"})
 		return
 	}
@@ -139,6 +146,26 @@ func (h *ProxyHandler) forwardRequest(c *gin.Context, target *services.TargetReq
 	targetURL, err := url.Parse(target.URL)
 	if err != nil {
 		return fmt.Errorf("invalid target URL: %w", err)
+	}
+
+	// 获取完整路径并处理
+	fullPath, _ := c.Get("fullPath")
+	requestPath := fullPath.(string)
+	
+	// 提取除了服务标识符之外的路径部分
+	parts := strings.SplitN(requestPath, "/", 2)
+	if len(parts) > 1 {
+		requestPath = parts[1]
+	} else {
+		requestPath = ""
+	}
+
+	// 如果目标URL没有以"/"结尾且请求路径不为空，则添加"/"
+	if requestPath != "" {
+		if !strings.HasSuffix(targetURL.Path, "/") && !strings.HasPrefix(requestPath, "/") {
+			targetURL.Path += "/"
+		}
+		targetURL.Path += requestPath
 	}
 
 	// 添加查询参数
