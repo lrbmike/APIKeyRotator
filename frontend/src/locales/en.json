@@ -46,7 +46,7 @@
             "method": "Request Method",
             "methodPlaceholder": "Select request method",
             "targetUrl": "Target URL",
-            "targetUrlPlaceholder": "https://api.weatherstack.com/current",
+            "targetUrlPlaceholder": "https://api.weatherstack.com",
             "apiFormat": "API Format",
             "apiFormatPlaceholder": "Select API format",
             "openaiCompatible": "OpenAI Compatible",

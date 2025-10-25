@@ -46,7 +46,7 @@
             "method": "请求方法",
             "methodPlaceholder": "选择请求方法",
             "targetUrl": "目标URL",
-            "targetUrlPlaceholder": "https://api.weatherstack.com/current",
+            "targetUrlPlaceholder": "https://api.weatherstack.com",
             "apiFormat": "API 格式",
             "apiFormatPlaceholder": "选择API格式",
             "openaiCompatible": "OpenAI Compatible",
