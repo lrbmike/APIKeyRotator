@@ -176,8 +176,8 @@ proxy_key = "<GLOBAL_PROXY_KEY>"
 
 # Query parameters
 params = {
-    "query": "London",
-    "access_key": "YOUR_ACCESS_KEY"  # This parameter will be replaced by the real API key via rotation
+    "query": "London"
+    # When proxying requests to the target API, the system polls the real API keys configured in the backend and appends them to the original authorization parameter access_key (which is configured in the backend).
 }
 
 # Set headers

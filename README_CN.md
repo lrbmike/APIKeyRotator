@@ -176,8 +176,9 @@ proxy_key = "<GLOBAL_PROXY_KEY>"
 
 # 查询参数
 params = {
-    "query": "London",
-    "access_key": "YOUR_ACCESS_KEY"  # 这个参数将被代理替换为轮询的真实API密钥
+    "query": "London"
+    # 在代理请求转发至目标 API 时，系统会轮询后台配置的真实 API 密钥，并将其拼接到原始授权参数 access_key（该参数由后台配置）中。
+）中
 }
 
 # 设置请求头
