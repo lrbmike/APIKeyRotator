@@ -20,11 +20,12 @@ ENV GOPROXY=https://goproxy.cn,direct
 # Copy backend go.mod and go.sum and download dependencies
 COPY backend/go.mod backend/go.sum ./
 RUN go mod download
-RUN go mod tidy
 
 # Copy backend source and build
 COPY backend/ ./
-RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-s -w" -o /api-key-rotator .
+
+# Tidy modules and build the application in a single step to avoid caching issues
+RUN go mod tidy && CGO_ENABLED=0 GOOS=linux go build -ldflags="-s -w" -o /api-key-rotator .
 
 # ---- Stage 3: Final Image ----
 FROM alpine:3.20
