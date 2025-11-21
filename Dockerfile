@@ -28,8 +28,9 @@ RUN go mod download
 # Copy the rest of the backend source code
 COPY backend/ ./
 
-# Build the application with CGO enabled for SQLite, output to the current directory
-RUN CGO_ENABLED=1 GOOS=linux go build -ldflags="-s -w" -o ./api-key-rotator .
+# Build the application with CGO enabled for SQLite and statically link all libraries
+# This is crucial for running a CGO-enabled binary in a minimal alpine image
+RUN CGO_ENABLED=1 GOOS=linux go build -ldflags="-s -w -extldflags '-static'" -o ./api-key-rotator .
 
 # ---- Stage 3: Final Image ----
 # Use a lightweight alpine image for the final production stage
