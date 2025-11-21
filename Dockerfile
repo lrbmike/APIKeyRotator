@@ -19,8 +19,7 @@ ENV GOPROXY=https://goproxy.cn,direct
 
 # Copy backend go.mod and go.sum and download dependencies
 COPY backend/go.mod backend/go.sum ./
-RUN go mod download
-RUN go get github.com/mattn/go-isatty@v0.0.19
+RUN go mod tidy
 
 # Copy backend source and build
 COPY backend/ ./
