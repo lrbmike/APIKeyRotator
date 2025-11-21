@@ -4,14 +4,15 @@ import (
 	"api-key-rotator/backend/internal/config"
 	"api-key-rotator/backend/internal/models"
 
-	"gorm.io/driver/mysql"
+	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
 )
 
 // Initialize 初始化数据库连接
 func Initialize(cfg *config.Config) (*gorm.DB, error) {
-	db, err := gorm.Open(mysql.Open(cfg.DatabaseURL), &gorm.Config{
+	// 使用 SQLite，数据库文件路径从配置中读取
+	db, err := gorm.Open(sqlite.Open(cfg.DatabasePath), &gorm.Config{
 		Logger: logger.Default.LogMode(logger.Info),
 	})
 	if err != nil {

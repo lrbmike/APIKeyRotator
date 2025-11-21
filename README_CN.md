@@ -2,6 +2,32 @@
 
 [English](README.md) | [中文简体](README_CN.md)
 
+## 分支说明
+
+本项目提供两个主要分支，满足不同的部署需求：
+
+- **`main` 分支**：基于 **MySQL + Redis** 的标准架构
+  - 适合高并发、分布式部署场景
+  - 需要外部 MySQL 和 Redis 服务
+  - 支持横向扩展和集群部署
+  
+- **`sqlite` 分支**：轻量级单文件部署版本
+  - 使用 **SQLite + 内存缓存**
+  - 单一可执行文件，无需额外服务
+  - 适合中小规模部署（< 10000 QPS）
+  - 易于备份和迁移
+
+**当前分支**: `sqlite` - 轻量级版本
+
+切换分支：
+```bash
+# 切换到标准架构
+git checkout main
+
+# 切换到轻量级版本
+git checkout sqlite
+```
+
 ## 项目简介
 
 **API Key Rotator** 是一个基于 Go (Gin) 构建的强大而灵活的API密钥管理与请求代理解决方案。它旨在集中化管理您所有第三方API的密钥，并通过一个统一的代理入口，实现密钥的自动轮询、负载均衡和安全隔离。
@@ -13,13 +39,14 @@
 ## 核心功能
 
 *   **集中化密钥管理**: 在Web界面统一管理所有服务的API密钥池。
-*   **动态密钥轮询**: 基于Redis实现的原子性轮询，有效分摊API请求配额。
+*   **动态密钥轮询**: 基于内存缓存实现的原子性轮询，有效分摊API请求配额。
 *   **类型安全的代理**:
     *   **通用API代理 (`/proxy`)**: 为任何RESTful API提供代理服务。
     *   **LLM API代理 (`/llm`)**: 为兼容OpenAI格式的大模型API提供原生流式支持和SDK友好的`base_url`。目前支持的接口格式包括 **OpenAI, Gemini, Anthropic** 等。
 *   **高度可扩展架构**: 后端采用适配器模式，未来可轻松扩展支持任何新类型的代理服务。
 *   **安全隔离**: 所有代理请求均通过全局密钥进行认证，支持配置多个密钥，保护后端真实密钥不被泄露。
-*   **Docker化部署**: 提供完整的 Docker Compose 配置，一键启动后端、前端、数据库和 Redis。
+*   **轻量部署**: 使用 SQLite 数据库和内存缓存，单一可执行文件即可运行，无需额外服务。
+*   **Docker化部署**: 提供完整的 Docker Compose 配置，一键启动所有服务。
 
 ## 快速开始
 
@@ -38,7 +65,17 @@
 cp .env.example .env
 ```
 
-然后，根据你的需要编辑 `.env` 文件，至少需要设置数据库密码和管理员密码等敏感信息。
+然后，根据你的需要编辑 `.env` 文件，至少需要设置管理员密码等敏感信息。
+
+主要配置项：
+```env
+DATABASE_PATH=./data/api_key_rotator.db
+BACKEND_PORT=8000
+GLOBAL_PROXY_KEYS=your_secret_key
+ADMIN_USER=admin
+ADMIN_PASSWORD=your_password
+PROXY_PUBLIC_BASE_URL=http://localhost:8000
+```
 
 #### 代理密钥配置
 
@@ -89,7 +126,10 @@ docker-compose -f docker-compose.prod.yml up --build -d
 
 *   安装 [Node.js](https://nodejs.org/) (18+)
 *   安装 [Go](https://golang.org/) (1.21+)
-*   在本地安装并运行 **MySQL** 和 **Redis** 服务
+*   安装 **GCC 编译器** (SQLite 需要 CGO 支持)
+    *   **Windows**: 安装 [TDM-GCC](https://jmeubank.github.io/tdm-gcc/) 或 [MinGW-w64](https://www.mingw-w64.org/)
+    *   **Linux**: 通常已预装，如未安装运行 `sudo apt-get install build-essential` (Ubuntu/Debian)
+    *   **验证**: 运行 `gcc --version` 确认安装成功
 
 ### 2. 启动后端服务
 
@@ -104,10 +144,31 @@ docker-compose -f docker-compose.prod.yml up --build -d
     ```
 
 3.  **配置环境变量**
-    在项目根目录创建 `.env` 文件（参考 `.env.example`），并配置数据库和 Redis 的连接信息。
+    在项目根目录创建 `.env` 文件（参考 `.env.example`），并配置必要的环境变量。
 
-4.  **启动后端服务器**
+4.  **编译项目**
     ```bash
+    # Windows (PowerShell)
+    $env:CGO_ENABLED=1
+    go build -o api-key-rotator.exe .
+    
+    # Linux/macOS
+    CGO_ENABLED=1 go build -o api-key-rotator .
+    
+    # 或使用编译脚本
+    # Windows: build.bat
+    # Linux: ./build.sh
+    ```
+
+5.  **启动后端服务器**
+    ```bash
+    # Windows
+    .\api-key-rotator.exe
+    
+    # Linux/macOS
+    ./api-key-rotator
+    
+    # 或直接运行（开发模式）
     go run main.go
     ```
     服务将在 `http://127.0.0.1:8000` 上运行。
@@ -122,11 +183,15 @@ docker-compose -f docker-compose.prod.yml up --build -d
 2.  **安装依赖**
     ```bash
     npm install
+    # 或使用 pnpm
+    pnpm install
     ```
 
 3.  **启动前端服务器**
     ```bash
     npm run dev
+    # 或
+    pnpm dev
     ```
     Vite 会自动处理 API 代理。服务将在 `http://localhost:5173` 上运行。
 
@@ -177,8 +242,8 @@ proxy_key = "<GLOBAL_PROXY_KEY>"
 # 查询参数
 params = {
     "query": "London"
-    # 在代理请求转发至目标 API 时，系统会轮询后台配置的真实 API 密钥，并将其拼接到原始授权参数 access_key（该参数由后台配置）中。
-）中
+    # 在代理请求转发至目标 API 时，系统会轮询后台配置的真实 API 密钥，
+    # 并将其拼接到原始授权参数（该参数由后台配置）中
 }
 
 # 设置请求头
@@ -205,9 +270,38 @@ else:
 
 代理会自动将请求转发到配置的目标URL，并将路径和查询参数附加到目标地址上。
 
+## 技术特点
+
+*   **轻量高效**: 使用 SQLite 和内存缓存，单一可执行文件即可运行
+*   **快速启动**: 无需等待外部数据库和缓存服务启动
+*   **适合场景**: 中小规模部署（单机 < 10000 QPS）
+*   **易于备份**: 只需备份 SQLite 数据库文件 (`data/api_key_rotator.db`)
+*   **Docker 友好**: 完全容器化，生产环境零配置
+
 ## 开发指南
 
 如果您希望深入代码功能，请参考以下文档：
 
-*   **[后端开发指南](./backend/README.md)**
-*   **[前端开发指南](./frontend/README.md)**
+*   **[后端开发指南](./backend/README.md)** - Go 后端详细说明
+*   **[前端开发指南](./frontend/README.md)** - Vue 3 前端详细说明
+*   **[快速开始指南](./QUICKSTART.md)** - 详细的快速开始步骤
+*   **[部署说明](./DEPLOYMENT.md)** - 完整的部署指南
+*   **[技术选型说明](./TECHNICAL_DECISIONS.md)** - 技术决策说明
+
+## 常见问题
+
+### Q: 编译时提示 "cgo: C compiler not found"
+**A:** 需要安装 GCC 编译器，Windows 用户安装 TDM-GCC，Linux 用户安装 build-essential
+
+### Q: 如何备份数据？
+**A:** 只需定期备份 `backend/data/api_key_rotator.db` 文件即可
+
+### Q: 支持分布式部署吗？
+**A:** 当前版本使用内存缓存，适合单机部署。如需分布式部署，可考虑切换回 Redis
+
+### Q: Docker 部署是否需要 GCC？
+**A:** 不需要，Docker 镜像内已包含所有必要的编译环境
+
+## License
+
+本项目采用 MIT 许可证。详情请参阅 [LICENSE](LICENSE) 文件。

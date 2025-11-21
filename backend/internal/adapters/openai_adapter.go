@@ -12,21 +12,22 @@ import (
 	"api-key-rotator/backend/internal/services"
 	"api-key-rotator/backend/internal/utils"
 
+	"api-key-rotator/backend/internal/cache"
+
 	"github.com/gin-gonic/gin"
-	"github.com/go-redis/redis/v8"
 	"gorm.io/gorm"
 )
 
-// OpenAIAdapter 适配器，用于处理所有兼容OpenAI格式的API
+// OpenAIAdapter OpenAI适配器
 type OpenAIAdapter struct {
 	*BaseLLMAdapter
 }
 
 // NewOpenAIAdapter 创建OpenAI适配器实例
-func NewOpenAIAdapter(cfg *config.Config, db *gorm.DB, redisClient *redis.Client,
+func NewOpenAIAdapter(cfg *config.Config, db *gorm.DB, cacheClient *cache.Client,
 	c *gin.Context, proxyConfig *models.ProxyConfig, action string) *OpenAIAdapter {
 	return &OpenAIAdapter{
-		BaseLLMAdapter: NewBaseLLMAdapter(cfg, db, redisClient, c, proxyConfig, action),
+		BaseLLMAdapter: NewBaseLLMAdapter(cfg, db, cacheClient, c, proxyConfig, action),
 	}
 }
 

@@ -11,21 +11,22 @@ import (
 	"api-key-rotator/backend/internal/services"
 	"api-key-rotator/backend/internal/utils"
 
+	"api-key-rotator/backend/internal/cache"
+
 	"github.com/gin-gonic/gin"
-	"github.com/go-redis/redis/v8"
 	"gorm.io/gorm"
 )
 
-// AnthropicAdapter is an adapter for the Anthropic API.
+// AnthropicAdapter Anthropic适配器
 type AnthropicAdapter struct {
 	*BaseLLMAdapter
 }
 
 // NewAnthropicAdapter creates a new AnthropicAdapter instance.
-func NewAnthropicAdapter(cfg *config.Config, db *gorm.DB, redisClient *redis.Client,
+func NewAnthropicAdapter(cfg *config.Config, db *gorm.DB, cacheClient *cache.Client,
 	c *gin.Context, proxyConfig *models.ProxyConfig, action string) *AnthropicAdapter {
 	return &AnthropicAdapter{
-		BaseLLMAdapter: NewBaseLLMAdapter(cfg, db, redisClient, c, proxyConfig, action),
+		BaseLLMAdapter: NewBaseLLMAdapter(cfg, db, cacheClient, c, proxyConfig, action),
 	}
 }
 

@@ -1,7 +1,6 @@
 package config
 
 import (
-	"fmt"
 	"os"
 	"strconv"
 	"strings"
@@ -10,30 +9,24 @@ import (
 // Config 应用配置结构
 type Config struct {
 	// 数据库配置
-	DatabaseURL string
-	
-	// Redis配置
-	RedisURL      string
-	RedisHost     string
-	RedisPort     int
-	RedisPassword string
-	
+	DatabasePath string // SQLite 数据库文件路径
+
 	// 服务器配置
 	Port string
-	
+
 	// JWT配置
 	JWTSecret string
-	
+
 	// 管理员配置
 	AdminUsername string
 	AdminPassword string
 	AdminUser     string // 别名，兼容性
-	
+
 	// 代理配置
 	ProxyTimeout       int
 	GlobalProxyKeys    string // 逗号分隔的多个密钥，也支持单个密钥
 	ProxyPublicBaseURL string
-	
+
 	// 日志配置
 	LogLevel string
 }
@@ -56,16 +49,9 @@ func (c *Config) GetGlobalProxyKeys() []string {
 // Load 加载配置
 func Load() *Config {
 	adminUsername := getEnv("ADMIN_USERNAME", "admin")
-	
-	// 构建数据库连接字符串
-	databaseURL := buildDatabaseURL()
-	
+
 	config := &Config{
-		DatabaseURL:        databaseURL,
-		RedisURL:           getEnv("REDIS_URL", "redis://localhost:6379/0"),
-		RedisHost:          getEnv("REDIS_HOST", "localhost"),
-		RedisPort:          getEnvAsInt("REDIS_PORT", 6379),
-		RedisPassword:      getEnv("REDIS_PASSWORD", ""),
+		DatabasePath:       getEnv("DATABASE_PATH", "./data/api_key_rotator.db"),
 		Port:               getEnv("BACKEND_PORT", "8000"),
 		JWTSecret:          getEnv("JWT_SECRET", "your-secret-key"),
 		AdminUsername:      adminUsername,
@@ -76,26 +62,8 @@ func Load() *Config {
 		ProxyPublicBaseURL: getEnv("PROXY_PUBLIC_BASE_URL", "http://localhost:8000"),
 		LogLevel:           getEnv("LOG_LEVEL", "info"),
 	}
-	
-	return config
-}
 
-// buildDatabaseURL 构建数据库连接字符串
-func buildDatabaseURL() string {
-	// 优先使用完整的DATABASE_URL
-	if databaseURL := os.Getenv("DATABASE_URL"); databaseURL != "" {
-		return databaseURL
-	}
-	
-	// 否则从分离的环境变量构建
-	dbHost := getEnv("DB_HOST", "localhost")
-	dbPort := getEnv("DB_PORT", "3306")
-	dbUser := getEnv("DB_USER", "root")
-	dbPassword := getEnv("DB_PASSWORD", "password")
-	dbName := getEnv("DB_NAME", "api_key_rotator")
-	
-	return fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8mb4&parseTime=True&loc=Local",
-		dbUser, dbPassword, dbHost, dbPort, dbName)
+	return config
 }
 
 // getEnv 获取环境变量，如果不存在则返回默认值

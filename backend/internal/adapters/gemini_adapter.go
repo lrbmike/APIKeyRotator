@@ -11,21 +11,22 @@ import (
 	"api-key-rotator/backend/internal/services"
 	"api-key-rotator/backend/internal/utils"
 
+	"api-key-rotator/backend/internal/cache"
+
 	"github.com/gin-gonic/gin"
-	"github.com/go-redis/redis/v8"
 	"gorm.io/gorm"
 )
 
-// GeminiAdapter 适配器，用于处理Google Gemini原生API格式
+// GeminiAdapter Gemini适配器
 type GeminiAdapter struct {
 	*BaseLLMAdapter
 }
 
 // NewGeminiAdapter 创建Gemini适配器实例
-func NewGeminiAdapter(cfg *config.Config, db *gorm.DB, redisClient *redis.Client,
+func NewGeminiAdapter(cfg *config.Config, db *gorm.DB, cacheClient *cache.Client,
 	c *gin.Context, proxyConfig *models.ProxyConfig, action string) *GeminiAdapter {
 	return &GeminiAdapter{
-		BaseLLMAdapter: NewBaseLLMAdapter(cfg, db, redisClient, c, proxyConfig, action),
+		BaseLLMAdapter: NewBaseLLMAdapter(cfg, db, cacheClient, c, proxyConfig, action),
 	}
 }
 
@@ -33,7 +34,7 @@ func NewGeminiAdapter(cfg *config.Config, db *gorm.DB, redisClient *redis.Client
 func (a *GeminiAdapter) ProcessRequest() (*services.TargetRequest, error) {
 	// 1. 代理访问认证 (劫持 'x-goog-api-key' Header)
 	proxyKey := a.c.GetHeader("x-goog-api-key")
-	
+
 	validKeys := a.cfg.GetGlobalProxyKeys()
 	isValidKey := false
 	for _, key := range validKeys {
@@ -45,7 +46,7 @@ func (a *GeminiAdapter) ProcessRequest() (*services.TargetRequest, error) {
 	if !isValidKey {
 		return nil, fmt.Errorf("invalid Proxy Key. Provide it via the 'key' URL query parameter")
 	}
-	
+
 	// 2. 轮询上游密钥
 	upstreamKey, err := a.RotateUpstreamKey()
 	if err != nil {

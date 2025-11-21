@@ -14,8 +14,9 @@ import (
 	"api-key-rotator/backend/internal/services"
 	"api-key-rotator/backend/internal/utils"
 
+	"api-key-rotator/backend/internal/cache"
+
 	"github.com/gin-gonic/gin"
-	"github.com/go-redis/redis/v8"
 	"gorm.io/gorm"
 )
 
@@ -23,41 +24,41 @@ import (
 type ProxyHandler struct {
 	cfg         *config.Config
 	db          *gorm.DB
-	redisClient *redis.Client
+	cacheClient *cache.Client
 }
 
 // NewProxyHandler 创建通用代理处理器实例
-func NewProxyHandler(cfg *config.Config, db *gorm.DB, redisClient *redis.Client) *ProxyHandler {
+func NewProxyHandler(cfg *config.Config, db *gorm.DB, cacheClient *cache.Client) *ProxyHandler {
 	return &ProxyHandler{
 		cfg:         cfg,
 		db:          db,
-		redisClient: redisClient,
+		cacheClient: cacheClient,
 	}
 }
 
 // HandleGenericProxy 处理通用代理请求
 func (h *ProxyHandler) HandleGenericProxy(c *gin.Context) {
 	slug := strings.TrimPrefix(c.Param("slug"), "/")
-	
+
 	// 提取服务标识符（第一个路径段）
 	parts := strings.SplitN(slug, "/", 2)
 	serviceSlug := parts[0]
-	
+
 	if err := services.ValidateSlug(serviceSlug); err != nil {
 		logger.Warningf("Bad Request for slug '%s': %v", serviceSlug, err)
 		c.JSON(http.StatusBadRequest, gin.H{"detail": err.Error()})
 		return
 	}
 
-	handler := services.NewBaseProxyHandler(h.cfg, h.db, h.redisClient, c, serviceSlug, "")
-	
+	handler := services.NewBaseProxyHandler(h.cfg, h.db, h.cacheClient, c, serviceSlug, "")
+
 	targetRequest, err := h.prepareGenericRequest(handler)
 	if err != nil {
 		logger.Warningf("Bad Request for slug '%s': %v", serviceSlug, err)
 		c.JSON(http.StatusBadRequest, gin.H{"detail": err.Error()})
 		return
 	}
-	
+
 	// 将完整的路径传递给转发函数
 	c.Set("fullPath", slug)
 
@@ -151,7 +152,7 @@ func (h *ProxyHandler) forwardRequest(c *gin.Context, target *services.TargetReq
 	// 获取完整路径并处理
 	fullPath, _ := c.Get("fullPath")
 	requestPath := fullPath.(string)
-	
+
 	// 提取除了服务标识符之外的路径部分
 	parts := strings.SplitN(requestPath, "/", 2)
 	if len(parts) > 1 {
@@ -202,7 +203,7 @@ func (h *ProxyHandler) forwardRequest(c *gin.Context, target *services.TargetReq
 
 	// 过滤响应头
 	filteredHeaders := utils.FilterResponseHeaders(resp.Header)
-	
+
 	// 设置响应头
 	for key, value := range filteredHeaders {
 		c.Header(key, value)

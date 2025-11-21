@@ -2,6 +2,32 @@
 
 [English](README.md) | [中文简体](README_CN.md)
 
+## Branch Information
+
+This project provides two main branches to meet different deployment needs:
+
+- **`main` branch**: Standard architecture based on **MySQL + Redis**
+  - Suitable for high-concurrency, distributed deployment scenarios
+  - Requires external MySQL and Redis services
+  - Supports horizontal scaling and cluster deployment
+  
+- **`sqlite` branch**: Lightweight single-file deployment version
+  - Uses **SQLite + In-memory cache**
+  - Single executable file, no additional services required
+  - Suitable for small to medium-scale deployments (< 10000 QPS)
+  - Easy to backup and migrate
+
+**Current branch**: `sqlite` - Lightweight version
+
+Switch branches:
+```bash
+# Switch to standard architecture
+git checkout main
+
+# Switch to lightweight version
+git checkout sqlite
+```
+
 ## Introduction
 
 **API Key Rotator** is a powerful and flexible API key management and request proxy solution built with Go (Gin). It is designed to centralize the management of all your third-party API keys and provide automatic rotation, load balancing, and secure isolation through a unified proxy endpoint.
@@ -13,13 +39,14 @@ The project includes a high-performance **Go backend** and a simple, easy-to-use
 ## Core Features
 
 *   **Centralized Key Management**: Manage API key pools for all services in a unified web interface.
-*   **Dynamic Key Rotation**: Atomic rotation based on Redis to effectively distribute API request quotas.
+*   **Dynamic Key Rotation**: Atomic rotation based on in-memory cache to effectively distribute API request quotas.
 *   **Type-Safe Proxies**:
     *   **Generic API Proxy (`/proxy`)**: Provides proxy services for any RESTful API.
     *   **LLM API Proxy (`/llm`)**: Offers native streaming support and an SDK-friendly `base_url` for large model APIs compatible with OpenAI's format. Supported providers include **OpenAI, Gemini, Anthropic**, etc.
 *   **Highly Extensible Architecture**: The backend uses an adapter pattern, making it easy to extend support for new types of proxy services in the future.
 *   **Secure Isolation**: All proxy requests are authenticated via global keys, with support for multiple keys to protect real backend keys from being exposed.
-*   **Dockerized Deployment**: Provides a complete Docker Compose configuration for one-click startup of the backend, frontend, database, and Redis.
+*   **Lightweight Deployment**: Uses SQLite database and in-memory cache, single executable file can run without additional services.
+*   **Dockerized Deployment**: Provides a complete Docker Compose configuration for one-click startup of all services.
 
 ## Quick Start
 
@@ -38,7 +65,17 @@ After cloning the project, create a `.env` file from the `.env.example` template
 cp .env.example .env
 ```
 
-Then, edit the `.env` file according to your needs, at least setting sensitive information such as the database password and administrator password.
+Then, edit the `.env` file according to your needs, at least setting sensitive information such as the administrator password.
+
+Main configuration items:
+```env
+DATABASE_PATH=./data/api_key_rotator.db
+BACKEND_PORT=8000
+GLOBAL_PROXY_KEYS=your_secret_key
+ADMIN_USER=admin
+ADMIN_PASSWORD=your_password
+PROXY_PUBLIC_BASE_URL=http://localhost:8000
+```
 
 #### Proxy Key Configuration
 
@@ -89,7 +126,10 @@ If you prefer to run and debug the source code directly on your local machine wi
 
 *   Install [Node.js](https://nodejs.org/) (18+)
 *   Install [Go](https://golang.org/) (1.21+)
-*   Install and run **MySQL** and **Redis** services locally
+*   Install **GCC Compiler** (SQLite requires CGO support)
+    *   **Windows**: Install [TDM-GCC](https://jmeubank.github.io/tdm-gcc/) or [MinGW-w64](https://www.mingw-w64.org/)
+    *   **Linux**: Usually pre-installed. If not, run `sudo apt-get install build-essential` (Ubuntu/Debian)
+    *   **Verification**: Run `gcc --version` to confirm installation
 
 ### 2. Start the Backend Service
 
@@ -104,10 +144,31 @@ If you prefer to run and debug the source code directly on your local machine wi
     ```
 
 3.  **Configure environment variables**
-    Create a `.env` file in the project root (refer to `.env.example`) and configure the connection information for the database and Redis.
+    Create a `.env` file in the project root (refer to `.env.example`) and configure the necessary environment variables.
 
-4.  **Start the backend server**
+4.  **Build the project**
     ```bash
+    # Windows (PowerShell)
+    $env:CGO_ENABLED=1
+    go build -o api-key-rotator.exe .
+    
+    # Linux/macOS
+    CGO_ENABLED=1 go build -o api-key-rotator .
+    
+    # Or use build scripts
+    # Windows: build.bat
+    # Linux: ./build.sh
+    ```
+
+5.  **Start the backend server**
+    ```bash
+    # Windows
+    .\api-key-rotator.exe
+    
+    # Linux/macOS
+    ./api-key-rotator
+    
+    # Or run directly (development mode)
     go run main.go
     ```
     The service will run at `http://127.0.0.1:8000`.
@@ -122,11 +183,15 @@ If you prefer to run and debug the source code directly on your local machine wi
 2.  **Install dependencies**
     ```bash
     npm install
+    # or use pnpm
+    pnpm install
     ```
 
 3.  **Start the frontend server**
     ```bash
     npm run dev
+    # or
+    pnpm dev
     ```
     Vite will automatically handle API proxying. The service will run at `http://localhost:5173`.
 
@@ -177,7 +242,9 @@ proxy_key = "<GLOBAL_PROXY_KEY>"
 # Query parameters
 params = {
     "query": "London"
-    # When proxying requests to the target API, the system polls the real API keys configured in the backend and appends them to the original authorization parameter access_key (which is configured in the backend).
+    # When proxying requests to the target API, the system polls the real API keys 
+    # configured in the backend and appends them to the original authorization parameter 
+    # (which is configured in the backend).
 }
 
 # Set headers
@@ -204,9 +271,38 @@ In this example:
 
 The proxy will automatically forward the request to the configured target URL, appending the path and query parameters to the target address.
 
+## Technical Features
+
+*   **Lightweight & Efficient**: Uses SQLite and in-memory cache, single executable file can run standalone
+*   **Fast Startup**: No need to wait for external database and cache services to start
+*   **Suitable Scenarios**: Small to medium-scale deployments (single instance < 10000 QPS)
+*   **Easy Backup**: Only need to backup the SQLite database file (`data/api_key_rotator.db`)
+*   **Docker Friendly**: Fully containerized, zero configuration for production environments
+
 ## Development Guide
 
 If you want to dive deeper into the code, please refer to the following documents:
 
-*   **[Backend Development Guide](./backend/README.md)**
-*   **[Frontend Development Guide](./frontend/README.md)**
+*   **[Backend Development Guide](./backend/README.md)** - Go backend details
+*   **[Frontend Development Guide](./frontend/README.md)** - Vue 3 frontend details
+*   **[Quick Start Guide](./QUICKSTART.md)** - Detailed quick start steps
+*   **[Deployment Guide](./DEPLOYMENT.md)** - Complete deployment instructions
+*   **[Technical Decisions](./TECHNICAL_DECISIONS.md)** - Technical decision explanations
+
+## FAQ
+
+### Q: Getting "cgo: C compiler not found" during compilation
+**A:** You need to install a GCC compiler. Windows users install TDM-GCC, Linux users install build-essential
+
+### Q: How to backup data?
+**A:** Simply backup the `backend/data/api_key_rotator.db` file regularly
+
+### Q: Does it support distributed deployment?
+**A:** The current version uses in-memory cache, suitable for single-instance deployment. For distributed deployment, consider switching back to Redis
+
+### Q: Does Docker deployment require GCC?
+**A:** No, the Docker image already includes all necessary compilation environments
+
+## License
+
+This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
