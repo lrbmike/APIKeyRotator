@@ -28,8 +28,8 @@ RUN go mod download
 # Copy the rest of the backend source code
 COPY backend/ ./
 
-# Build the application with CGO enabled for SQLite
-RUN CGO_ENABLED=1 GOOS=linux go build -ldflags="-s -w" -o /api-key-rotator .
+# Build the application with CGO enabled for SQLite, output to the current directory
+RUN CGO_ENABLED=1 GOOS=linux go build -ldflags="-s -w" -o ./api-key-rotator .
 
 # ---- Stage 3: Final Image ----
 # Use a lightweight alpine image for the final production stage
@@ -40,7 +40,7 @@ WORKDIR /app
 RUN apk add --no-cache ca-certificates tzdata
 
 # Copy backend binary from the backend-builder stage
-COPY --from=backend-builder /api-key-rotator /app/api-key-rotator
+COPY --from=backend-builder /app/backend/api-key-rotator /app/api-key-rotator
 
 # Copy frontend build artifacts from the frontend-builder stage
 COPY --from=frontend-builder /app/frontend/dist /app/public
