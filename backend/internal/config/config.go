@@ -48,22 +48,40 @@ func (c *Config) GetGlobalProxyKeys() []string {
 
 // Load 加载配置
 func Load() *Config {
+	// 加载敏感或必需的配置，如果没有设置则会 panic
+	jwtSecret := getRequiredEnv("JWT_SECRET")
+	adminPassword := getRequiredEnv("ADMIN_PASSWORD")
+	globalProxyKeys := getRequiredEnv("GLOBAL_PROXY_KEYS")
+
+	// 加载可选配置，如果未设置则使用默认值
 	adminUsername := getEnv("ADMIN_USERNAME", "admin")
 
 	config := &Config{
+		// 必填项
+		JWTSecret:       jwtSecret,
+		AdminPassword:   adminPassword,
+		GlobalProxyKeys: globalProxyKeys,
+
+		// 可选项
 		DatabasePath:       getEnv("DATABASE_PATH", "./data/api_key_rotator.db"),
 		Port:               getEnv("BACKEND_PORT", "8000"),
-		JWTSecret:          getEnv("JWT_SECRET", "your-secret-key"),
 		AdminUsername:      adminUsername,
-		AdminPassword:      getEnv("ADMIN_PASSWORD", "admin123"),
 		AdminUser:          adminUsername, // 别名，兼容性
 		ProxyTimeout:       getEnvAsInt("PROXY_TIMEOUT", 30),
-		GlobalProxyKeys:    getEnv("GLOBAL_PROXY_KEYS", "your-global-proxy-key"),
 		ProxyPublicBaseURL: getEnv("PROXY_PUBLIC_BASE_URL", "http://localhost:8000"),
 		LogLevel:           getEnv("LOG_LEVEL", "info"),
 	}
 
 	return config
+}
+
+// getRequiredEnv 获取一个必需的环境变量，如果不存在则 panic
+func getRequiredEnv(key string) string {
+	value := os.Getenv(key)
+	if value == "" {
+		panic("FATAL: Required environment variable not set: " + key)
+	}
+	return value
 }
 
 // getEnv 获取环境变量，如果不存在则返回默认值

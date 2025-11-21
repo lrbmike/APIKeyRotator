@@ -80,14 +80,14 @@ git checkout sqlite
 
 ### 2. 配置项目
 
-克隆本项目后，在项目根目录下，从 `.env.example` 模板创建一个 `.env` 文件。
+在运行应用之前，您必须配置好环境变量。
 
-```bash
-# 复制配置文件模板
-cp .env.example .env
-```
+1.  **从模板创建 `.env` 文件**:
+    ```bash
+    cp .env.example .env
+    ```
 
-然后，根据你的需要编辑 `.env` 文件，至少需要设置管理员密码等敏感信息。
+2.  **编辑 `.env` 文件**: 您 **必须** 为必填项 (`ADMIN_PASSWORD`, `JWT_SECRET`, `GLOBAL_PROXY_KEYS`) 提供值。可选项可以保留不变，以使用其默认值。
 
 主要配置项：
 ```env
@@ -339,18 +339,26 @@ docker build -t api-key-rotator .
 
 ### 运行 Docker 容器
 
-镜像构建成功后，您可以使用以下命令来运行它：
+要运行容器，您首先需要在项目根目录中准备一个 `.env` 文件，以提供必要的环境变量。您可以从模板创建它：
 
 ```bash
-docker run -d -p 8000:8000 --name api-key-rotator-app -v $(pwd)/backend/data:/app/data api-key-rotator
+cp .env.example .env
+```
+请务必编辑 `.env` 文件，设置您想要的密码和密钥。
+
+当 `.env` 文件准备好后，使用以下命令运行容器：
+
+```bash
+docker run -d -p 8000:8000 --name api-key-rotator-app --env-file ./.env -v $(pwd)/backend/data:/app/data api-key-rotator
 ```
 
 命令解释：
 - `-d`：以后台模式运行容器。
-- `-p 8000:8000`：将容器的 `8000` 端口映射到您主机的 `8000` 端口。这样，您就可以通过 `http://localhost:8000` 来访问应用。
-- `--name api-key-rotator-app`：为您的容器指定一个名称，方便管理。
-- `-v $(pwd)/backend/data:/app/data`：将本地的 `backend/data` 目录（包含了 SQLite 数据库文件）挂载到容器的 `/app/data` 目录。**这非常重要**，因为它可以确保您的数据在容器重启或删除后依然存在。
-- `api-key-rotator`：指定要运行的镜像名称。
+- `-p 8000:8000`：将容器的 `8000` 端口映射到您主机的 `8000` 端口。
+- `--name api-key-rotator-app`：为您的容器指定一个名称。
+- `--env-file ./.env`：将 `.env` 文件中的环境变量加载到容器中。这是管理配置的标准方式。
+- `-v $(pwd)/backend/data:/app/data`：将本地的 `backend/data` 目录（包含 SQLite 数据库）挂载到容器中，以持久化数据。
+- `api-key-rotator`：指定要运行的镜像。
 
 容器启动后，您就可以在浏览器中打开 `http://localhost:8000` 来访问您的应用了。
 

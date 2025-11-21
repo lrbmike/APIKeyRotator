@@ -80,14 +80,14 @@ Ensure that [Docker](https://www.docker.com/) and [Docker Compose](https://docs.
 
 ### 2. Configure the Project
 
-After cloning the project, create a `.env` file from the `.env.example` template in the project root directory.
+Before running the application, you must configure your environment variables.
 
-```bash
-# Copy the configuration file template
-cp .env.example .env
-```
+1.  **Create a `.env` file** from the template:
+    ```bash
+    cp .env.example .env
+    ```
 
-Then, edit the `.env` file according to your needs, at least setting sensitive information such as the administrator password.
+2.  **Edit the `.env` file**: You **must** provide values for the required settings (`ADMIN_PASSWORD`, `JWT_SECRET`, `GLOBAL_PROXY_KEYS`). Optional settings can be left as they are to use their default values.
 
 Main configuration items:
 ```env
@@ -340,18 +340,26 @@ The build process may take a few minutes as it needs to download dependencies an
 
 ### Running the Docker Container
 
-Once the image is built, you can run it with the following command:
+To run the container, you first need a `.env` file in your project's root directory to provide the necessary environment variables. You can create one from the template:
 
 ```bash
-docker run -d -p 8000:8000 --name api-key-rotator-app -v $(pwd)/backend/data:/app/data api-key-rotator
+cp .env.example .env
+```
+Make sure to edit the `.env` file and set your desired passwords and keys.
+
+Once the `.env` file is ready, run the container with the following command:
+
+```bash
+docker run -d -p 8000:8000 --name api-key-rotator-app --env-file ./.env -v $(pwd)/backend/data:/app/data api-key-rotator
 ```
 
 Command explanation:
-- `-d`: Runs the container in detached mode (in the background).
-- `-p 8000:8000`: Maps port `8000` of the container to port `8000` on your host. You can then access the application at `http://localhost:8000`.
-- `--name api-key-rotator-app`: Assigns a name to your container for easy management.
-- `-v $(pwd)/backend/data:/app/data`: Mounts the local `backend/data` directory (which contains the SQLite database file) to the `/app/data` directory in the container. **This is very important** as it ensures your data persists even if the container is restarted or deleted.
-- `api-key-rotator`: Specifies the name of the image to run.
+- `-d`: Runs the container in detached mode.
+- `-p 8000:8000`: Maps the container's port `8000` to your host's port `8000`.
+- `--name api-key-rotator-app`: Assigns a name to your container.
+- `--env-file ./.env`: Loads environment variables from the `.env` file into the container. This is the standard way to manage configuration.
+- `-v $(pwd)/backend/data:/app/data`: Mounts the local `backend/data` directory (containing the SQLite database) into the container to persist data.
+- `api-key-rotator`: Specifies the image to run.
 
 After the container starts, you can open `http://localhost:8000` in your browser to access the application.
 

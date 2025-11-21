@@ -17,6 +17,9 @@ WORKDIR /app/backend
 # Set Go proxy
 ENV GOPROXY=https://goproxy.cn,direct
 
+# Install C compiler for CGO
+RUN apk add --no-cache build-base
+
 # Copy backend go.mod and go.sum and download dependencies
 COPY backend/go.mod backend/go.sum ./
 RUN go mod download
@@ -24,7 +27,8 @@ RUN go mod download
 # Copy backend source and build
 COPY backend/ ./
 
-RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-s -w" -o /api-key-rotator .
+# Enable CGO to build SQLite and build the application
+RUN CGO_ENABLED=1 GOOS=linux go build -ldflags="-s -w" -o /api-key-rotator .
 
 # ---- Stage 3: Final Image ----
 FROM alpine:3.20
@@ -40,7 +44,6 @@ COPY --from=backend-builder /api-key-rotator /app/api-key-rotator
 COPY --from=frontend-builder /app/frontend/dist /app/public
 
 # Copy other necessary files
-COPY .env.example /app/.env.example
 COPY backend/data /app/data
 
 # Set timezone
