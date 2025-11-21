@@ -24,8 +24,7 @@ RUN go mod download
 # Copy backend source and build
 COPY backend/ ./
 
-# Tidy modules and build the application in a single step to avoid caching issues
-RUN go mod tidy && CGO_ENABLED=0 GOOS=linux go build -ldflags="-s -w" -o /api-key-rotator .
+RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-s -w" -o /api-key-rotator .
 
 # ---- Stage 3: Final Image ----
 FROM alpine:3.20
