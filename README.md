@@ -2,6 +2,33 @@
 
 [English](README.md) | [中文简体](README_CN.md)
 
+## Branch Information
+
+This project provides two main branches to meet different deployment needs:
+
+- **`master` branch**: Standard architecture based on **MySQL + Redis** (Current branch)
+  - Suitable for high-concurrency, distributed deployment scenarios
+  - Requires external MySQL and Redis services
+  - Supports horizontal scaling and cluster deployment
+  - Better performance and scalability
+  
+- **`sqlite` branch**: Lightweight single-file deployment version
+  - Uses **SQLite + In-memory cache**
+  - Single executable file, no additional services required
+  - Suitable for small to medium-scale deployments (< 10000 QPS)
+  - Easy to backup and migrate
+
+**Current branch**: `master` - Standard architecture version
+
+Switch branches:
+```bash
+# Switch to lightweight version
+git checkout sqlite
+
+# Switch back to standard architecture
+git checkout master
+```
+
 ## Introduction
 
 **API Key Rotator** is a powerful and flexible API key management and request proxy solution built with Go (Gin). It is designed to centralize the management of all your third-party API keys and provide automatic rotation, load balancing, and secure isolation through a unified proxy endpoint.
