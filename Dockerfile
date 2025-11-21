@@ -11,47 +11,46 @@ COPY frontend/ ./
 RUN pnpm build
 
 # ---- Stage 2: Build Backend ----
-FROM golang:1.22-alpine AS backend-builder
+# Use the standard golang image which includes the CGO toolchain.
+# This is more efficient than installing build-base on an alpine image.
+FROM golang:1.22 AS backend-builder
 WORKDIR /app/backend
 
-# Set Go proxy
+# Set Go proxy for faster dependency downloads
 ENV GOPROXY=https://goproxy.cn,direct
 
-# Install C compiler for CGO
-RUN apk add --no-cache build-base
-
-# Copy backend go.mod and go.sum and download dependencies
+# Copy go.mod and go.sum first to leverage Docker cache
 COPY backend/go.mod backend/go.sum ./
+
+# Download dependencies
 RUN go mod download
 
-# Copy backend source and build
+# Copy the rest of the backend source code
 COPY backend/ ./
 
-# Enable CGO to build SQLite and build the application
+# Build the application with CGO enabled for SQLite
 RUN CGO_ENABLED=1 GOOS=linux go build -ldflags="-s -w" -o /api-key-rotator .
 
 # ---- Stage 3: Final Image ----
+# Use a lightweight alpine image for the final production stage
 FROM alpine:3.20
 WORKDIR /app
 
-# Install necessary packages
+# Install necessary packages for the final image
 RUN apk add --no-cache ca-certificates tzdata
 
-# Copy backend binary from backend-builder stage
+# Copy backend binary from the backend-builder stage
 COPY --from=backend-builder /api-key-rotator /app/api-key-rotator
 
-# Copy frontend build artifacts from frontend-builder stage
+# Copy frontend build artifacts from the frontend-builder stage
 COPY --from=frontend-builder /app/frontend/dist /app/public
-
-# Copy other necessary files
-COPY backend/data /app/data
 
 # Set timezone
 ENV TZ=Asia/Shanghai
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
-# Expose port
+# Expose the application port
 EXPOSE 8000
 
-# Set entrypoint
+# Set the entrypoint for the container
 CMD ["/app/api-key-rotator"]
