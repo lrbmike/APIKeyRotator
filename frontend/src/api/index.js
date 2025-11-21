@@ -3,7 +3,7 @@ import { ElMessage } from 'element-plus'
 
 // 创建一个通用的API客户端
 const apiClient = axios.create({
-  baseURL: '/api/admin',
+  baseURL: '/api', // 统一的API前缀
   headers: {
     'Content-Type': 'application/json',
   }
@@ -45,62 +45,62 @@ export const login = (username, password) => {
     password: password
   };
   // login请求不需要token，但为了统一也使用apiClient
-  return apiClient.post('/login', payload);
+  return apiClient.post('/admin/login', payload);
 }
 
 
 // --- 配置管理 API ---
 
 export const getAllConfigs = () => {
-  return apiClient.get('/proxy-configs')
+  return apiClient.get('/admin/proxy-configs')
 }
 
 // 创建通用API配置
 export const createProxyConfig = (data) => {
-  return apiClient.post('/proxy-configs', data)
+  return apiClient.post('/admin/proxy-configs', data)
 }
 
 // 创建LLM API配置
 export const createLlmConfig = (data) => {
-  return apiClient.post('/llm-configs', data)
+  return apiClient.post('/admin/llm-configs', data)
 }
 
 // 获取指定配置的Key列表
 export const getKeysForConfig = (configId) => {
-  return apiClient.get(`/proxy-configs/${configId}/keys`);
+  return apiClient.get(`/admin/proxy-configs/${configId}/keys`);
 }
 
 // 为配置添加Key
 export const addApiKeyToConfig = (configId, keyData) => {
-  return apiClient.post(`/proxy-configs/${configId}/keys`, keyData);
+  return apiClient.post(`/admin/proxy-configs/${configId}/keys`, keyData);
 }
 
 // 更新Key的状态
 export const updateApiKeyStatus = (keyId, isActive) => {
-  return apiClient.patch(`/keys/${keyId}`, { is_active: isActive });
+  return apiClient.patch(`/admin/keys/${keyId}`, { is_active: isActive });
 }
 
 // 删除一个Key
 export const deleteApiKey = (keyId) => {
-  return apiClient.delete(`/keys/${keyId}`);
+  return apiClient.delete(`/admin/keys/${keyId}`);
 }
 
 // 获取应用公共配置
 export const getAppConfig = () => {
-  return apiClient.get('/app-config');
+  return apiClient.get('/admin/app-config');
 }
 
 // 更新通用API配置
 export const updateProxyConfig = (id, data) => {
-  return apiClient.put(`/proxy-configs/${id}`, data);
+  return apiClient.put(`/admin/proxy-configs/${id}`, data);
 }
 
 // 更新LLM API配置
 export const updateLlmConfig = (id, data) => {
-  return apiClient.put(`/llm-configs/${id}`, data);
+  return apiClient.put(`/admin/llm-configs/${id}`, data);
 }
 
 // 更新配置的状态
 export const updateConfigStatus = (id, isActive) => {
-  return apiClient.put(`/proxy-configs/${id}/status`, { is_active: isActive });
+  return apiClient.put(`/admin/proxy-configs/${id}/status`, { is_active: isActive });
 }

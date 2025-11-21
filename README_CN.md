@@ -50,9 +50,31 @@ git checkout sqlite
 
 ## 快速开始
 
-本项目已完全容器化，推荐使用 Docker Compose 进行一键部署和开发。
+本项目支持多种容器化方式，您可以根据需要选择最适合您的方式。
 
-### 1. 环境准备
+### 方式一：单一 Docker 镜像部署（推荐用于 Render 等 PaaS 平台）
+
+我们在项目根目录提供了一个 `Dockerfile`，它能将前端和后端打包成一个单一的镜像。这是最简单的部署方式，强烈推荐在云平台上使用。
+
+1.  **构建镜像**:
+    ```bash
+    docker build -t api-key-rotator .
+    ```
+
+2.  **运行容器**:
+    ```bash
+    docker run -d -p 8000:8000 --name api-key-rotator-app -v $(pwd)/backend/data:/app/data api-key-rotator
+    ```
+
+运行后，您可以通过 `http://localhost:8000` 访问应用。
+
+更详细的说明，包括如何在 Render 上进行部署，请参阅我们的 **[Docker 部署指南](./DEPLOY_WITH_DOCKER.md)**。
+
+### 方式二：使用 Docker Compose（适用于本地开发和多容器环境）
+
+这种方式适合本地开发，因为它支持热重载。
+
+#### 1. 环境准备
 
 确保您的系统中已经安装了 [Docker](https://www.docker.com/) 和 [Docker Compose](https://docs.docker.com/compose/install/)。
 
@@ -285,8 +307,104 @@ else:
 *   **[后端开发指南](./backend/README.md)** - Go 后端详细说明
 *   **[前端开发指南](./frontend/README.md)** - Vue 3 前端详细说明
 *   **[快速开始指南](./QUICKSTART.md)** - 详细的快速开始步骤
-*   **[部署说明](./DEPLOYMENT.md)** - 完整的部署指南
 *   **[技术选型说明](./TECHNICAL_DECISIONS.md)** - 技术决策说明
+
+## 部署说明
+
+### 环境准备
+
+在开始之前，请确保您的本地环境中已经安装了 [Docker](https://docs.docker.com/get-docker/)。您可以从 Docker 官网下载并安装适合您操作系统的版本。
+
+安装完成后，您可以通过以下命令验证 Docker 是否安装成功：
+
+```bash
+docker --version
+```
+
+### 构建 Docker 镜像
+
+我们推荐使用项目根目录下的 `Dockerfile` 来构建一个包含前端和后端的统一镜像。这个镜像会由 Go 后端来提供前端静态文件的服务。
+
+在项目的根目录下，打开终端并运行以下命令：
+
+```bash
+docker build -t api-key-rotator .
+```
+
+这个命令会执行以下操作：
+- `-t api-key-rotator`：为您的镜像指定一个名称（tag），这里我们将其命名为 `api-key-rotator`。
+- `.`：告诉 Docker 在当前目录下查找 `Dockerfile`。
+
+构建过程可能需要几分钟时间，因为它需要下载依赖、编译代码。
+
+### 运行 Docker 容器
+
+镜像构建成功后，您可以使用以下命令来运行它：
+
+```bash
+docker run -d -p 8000:8000 --name api-key-rotator-app -v $(pwd)/backend/data:/app/data api-key-rotator
+```
+
+命令解释：
+- `-d`：以后台模式运行容器。
+- `-p 8000:8000`：将容器的 `8000` 端口映射到您主机的 `8000` 端口。这样，您就可以通过 `http://localhost:8000` 来访问应用。
+- `--name api-key-rotator-app`：为您的容器指定一个名称，方便管理。
+- `-v $(pwd)/backend/data:/app/data`：将本地的 `backend/data` 目录（包含了 SQLite 数据库文件）挂载到容器的 `/app/data` 目录。**这非常重要**，因为它可以确保您的数据在容器重启或删除后依然存在。
+- `api-key-rotator`：指定要运行的镜像名称。
+
+容器启动后，您就可以在浏览器中打开 `http://localhost:8000` 来访问您的应用了。
+
+### 访问地址说明
+
+当您通过 `http://localhost:8000` 访问时：
+
+- **前端应用**：直接在浏览器中打开 `http://localhost:8000`，您将看到的是 Vue.js 构建的前端用户界面。
+- **后端 API**：所有的后端 API 服务都通过 `/api` 前缀来访问。例如：
+  - 登录接口：`http://localhost:8000/api/admin/login`
+  - 获取配置接口：`http://localhost:8000/api/admin/proxy-configs`
+  - 代理服务接口：`http://localhost:8000/api/proxy/...`
+
+Go 后端同时承担了 Web 服务器和 API 服务器的角色。
+
+### 在 Render 上部署
+
+[Render](https://render.com/) 提供了对 Docker 部署的良好支持。您可以按照以下步骤在 Render 上部署您的项目：
+
+1.  **将代码推送到 GitHub/GitLab**：确保您所有的代码，包括我们新创建的 `Dockerfile`，都已提交并推送到代码仓库。
+
+2.  **在 Render 创建新服务**：
+    - 登录 Render，点击 "New" -> "Web Service"。
+    - 连接您的 GitHub 或 GitLab 账号，并选择您的项目仓库。
+
+3.  **配置服务**：
+    - **Environment**：选择 `Docker`。
+    - **Name**：为您的服务取一个名字。
+    - **Root Directory**：如果您的 `Dockerfile` 不在根目录，需要指定路径。在我们的项目中，它就在根目录，所以留空即可。
+    - **Port**：在 "Advanced" 设置中，确保 "Port" 设置为 `8000`，这与我们在 `Dockerfile` 中暴露的端口一致。
+    - **Persistent Storage** (可选，但推荐)：为了持久化您的 SQLite 数据库，您可以添加一个 "Disk"：
+        - **Mount Path**：设置为 `/app/data`。
+        - **Size**：根据您的需要选择磁盘大小。
+
+4.  **添加环境变量**：如果您的应用需要环境变量（例如，在 `.env` 文件中定义的变量），您需要在 Render 的 "Environment" 标签页中进行配置。
+
+5.  **部署**：点击 "Create Web Service"，Render 将会自动从您的仓库拉取代码，使用 `Dockerfile` 构建镜像，并部署您的应用。
+
+部署完成后，Render 会为您提供一个公开的 URL，您可以通过这个 URL 访问您的应用。
+
+### (可选) 单独构建前后端
+
+如果您希望单独构建和运行前端或后端，您依然可以使用 `frontend/Dockerfile` 和 `backend/Dockerfile`。
+
+- **构建前端**：
+  ```bash
+  docker build -t frontend-app -f frontend/Dockerfile .
+  ```
+- **构建后端**：
+  ```bash
+  docker build -t backend-app -f backend/Dockerfile .
+  ```
+
+这种方式更适合在开发或需要将前后端分离部署的场景。
 
 ## 常见问题
 

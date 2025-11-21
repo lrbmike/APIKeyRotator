@@ -115,17 +115,7 @@ backend/
 
 4. **编译项目**
 
-   **方法 1: 使用编译脚本（推荐）**
-   ```bash
-   # Windows
-   build.bat
-   
-   # Linux/macOS
-   chmod +x build.sh
-   ./build.sh
-   ```
-
-   **方法 2: 手动编译**
+   **编译方法**
    ```bash
    # Windows (PowerShell)
    $env:CGO_ENABLED=1
@@ -160,22 +150,37 @@ backend/
 
 ## Docker部署
 
-使用 Docker 可以避免 GCC 依赖问题，推荐用于生产环境。
+我们提供了多种使用 Docker 的部署方式。
 
-### 构建镜像
+### 方式一：单一镜像部署（推荐）
 
+本服务是整个项目的一部分，可以作为一个单一的 Docker 镜像进行部署。这是最简单且推荐的方式，尤其适用于像 Render 这样的 PaaS 平台。
+
+要实现这一点，请使用项目根目录下的 `Dockerfile`。
+
+```bash
+# 在项目根目录中
+docker build -t api-key-rotator .
+```
+
+详细说明请参阅根目录下的 **[Docker 部署指南](../DEPLOY_WITH_DOCKER.md)**。
+
+### 方式二：使用 Docker Compose（仅后端或多容器设置）
+
+如果您希望单独运行后端服务，可以使用 `docker-compose`。
+
+**构建后端镜像：**
 ```bash
 # 在项目根目录运行
 docker-compose build backend
 ```
 
-### 使用Docker Compose
-
+**使用 Docker Compose：**
 ```bash
 # 启动所有服务
 docker-compose up -d
 
-# 查看日志
+# 查看后端日志
 docker-compose logs -f backend
 
 # 停止服务

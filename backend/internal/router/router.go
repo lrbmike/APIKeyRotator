@@ -43,10 +43,15 @@ func Setup(cfg *config.Config, db *gorm.DB, cacheClient *cache.Client) *gin.Engi
 		c.Next()
 	})
 
+	// 静态文件服务
+	r.Static("/assets", "./public/assets")
+
 	// 添加404处理器
 	r.NoRoute(func(c *gin.Context) {
-		fmt.Printf("404 Not Found: %s %s\n", c.Request.Method, c.Request.URL.Path)
-		c.JSON(404, gin.H{"error": "Route not found"})
+		// 对于所有未匹配到API的路由，都返回index.html
+		// 这对于前端路由（如Vue Router的history模式）是必需的
+		fmt.Printf("No route matched for %s, serving index.html\n", c.Request.URL.Path)
+		c.File("./public/index.html")
 	})
 
 	// 创建处理器实例
@@ -54,51 +59,48 @@ func Setup(cfg *config.Config, db *gorm.DB, cacheClient *cache.Client) *gin.Engi
 	proxyHandler := handlers.NewProxyHandler(cfg, db, cacheClient)
 	llmProxyHandler := handlers.NewLLMProxyHandler(cfg, db, cacheClient)
 
-	// 根路径
-	r.GET("/", func(c *gin.Context) {
-		c.JSON(200, gin.H{
-			"message": "Welcome to the API Key Rotator",
-		})
-	})
-
-	// 管理API路由组
-	adminAPI := r.Group("/admin")
+	// 创建一个总的API路由组
+	api := r.Group("/api")
 	{
-		// 添加路由级别的调试中间件
-		adminAPI.Use(func(c *gin.Context) {
-			fmt.Printf("Admin API Request: %s %s\n", c.Request.Method, c.Request.URL.Path)
-			c.Next()
-		})
+		// 管理API路由组
+		adminAPI := api.Group("/admin")
+		{
+			// 添加路由级别的调试中间件
+			adminAPI.Use(func(c *gin.Context) {
+				fmt.Printf("Admin API Request: %s %s\n", c.Request.Method, c.Request.URL.Path)
+				c.Next()
+			})
 
-		// 应用配置和认证
-		adminAPI.GET("/app-config", managementHandler.GetAppConfig)
-		adminAPI.POST("/login", managementHandler.Login)
+			// 应用配置和认证
+			adminAPI.GET("/app-config", managementHandler.GetAppConfig)
+			adminAPI.POST("/login", managementHandler.Login)
 
-		// 代理配置管理
-		adminAPI.POST("/proxy-configs", managementHandler.CreateConfig)
-		adminAPI.GET("/proxy-configs", managementHandler.GetAllConfigs)
-		adminAPI.GET("/proxy-configs/:id", managementHandler.GetConfigByID)
-		adminAPI.PUT("/proxy-configs/:id", managementHandler.UpdateConfig)
-		adminAPI.PUT("/proxy-configs/:id/status", managementHandler.UpdateConfigStatus)
-		adminAPI.DELETE("/proxy-configs/:id", managementHandler.DeleteConfig)
+			// 代理配置管理
+			adminAPI.POST("/proxy-configs", managementHandler.CreateConfig)
+			adminAPI.GET("/proxy-configs", managementHandler.GetAllConfigs)
+			adminAPI.GET("/proxy-configs/:id", managementHandler.GetConfigByID)
+			adminAPI.PUT("/proxy-configs/:id", managementHandler.UpdateConfig)
+			adminAPI.PUT("/proxy-configs/:id/status", managementHandler.UpdateConfigStatus)
+			adminAPI.DELETE("/proxy-configs/:id", managementHandler.DeleteConfig)
 
-		// API密钥管理
-		adminAPI.GET("/proxy-configs/:id/keys", managementHandler.GetKeysForConfig)
-		adminAPI.POST("/proxy-configs/:id/keys", managementHandler.CreateAPIKeyForConfig)
-		adminAPI.PATCH("/keys/:keyID", managementHandler.UpdateAPIKeyStatus)
-		adminAPI.DELETE("/keys/:keyID", managementHandler.DeleteAPIKey)
-	}
+			// API密钥管理
+			adminAPI.GET("/proxy-configs/:id/keys", managementHandler.GetKeysForConfig)
+			adminAPI.POST("/proxy-configs/:id/keys", managementHandler.CreateAPIKeyForConfig)
+			adminAPI.PATCH("/keys/:keyID", managementHandler.UpdateAPIKeyStatus)
+			adminAPI.DELETE("/keys/:keyID", managementHandler.DeleteAPIKey)
+		}
 
-	// 通用代理路由组
-	proxyGroup := r.Group("/proxy")
-	{
-		proxyGroup.Any("/*slug", proxyHandler.HandleGenericProxy)
-	}
+		// 通用代理路由组
+		proxyGroup := api.Group("/proxy")
+		{
+			proxyGroup.Any("/*slug", proxyHandler.HandleGenericProxy)
+		}
 
-	// LLM代理路由组
-	llmGroup := r.Group("/llm")
-	{
-		llmGroup.Any("/:slug/*action", llmProxyHandler.HandleLLMProxy)
+		// LLM代理路由组
+		llmGroup := api.Group("/llm")
+		{
+			llmGroup.Any("/:slug/*action", llmProxyHandler.HandleLLMProxy)
+		}
 	}
 
 	return r

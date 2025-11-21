@@ -115,17 +115,7 @@ backend/
 
 4. **Build the project**
 
-   **Method 1: Using build scripts (Recommended)**
-   ```bash
-   # Windows
-   build.bat
-   
-   # Linux/macOS
-   chmod +x build.sh
-   ./build.sh
-   ```
-
-   **Method 2: Manual compilation**
+   **Build Method**
    ```bash
    # Windows (PowerShell)
    $env:CGO_ENABLED=1
@@ -160,41 +150,41 @@ After starting the service, you can view the APIs as follows:
 
 ## Docker Deployment
 
-Using Docker can avoid GCC dependency issues and is recommended for production environments.
+We offer multiple ways to deploy using Docker.
 
-### Building the Image
+### Method 1: Single Image Deployment (Recommended)
 
+This service is part of a larger project that can be deployed as a single Docker image. This is the simplest and recommended method, especially for PaaS platforms like Render.
+
+To do this, use the `Dockerfile` in the project's root directory.
+
+```bash
+# In the project root directory
+docker build -t api-key-rotator .
+```
+
+For detailed instructions, please see the **[Docker Deployment Guide](../DEPLOY_WITH_DOCKER.md)** in the root directory.
+
+### Method 2: Using Docker Compose (For backend-only or multi-container setups)
+
+If you wish to run the backend service separately, you can use `docker-compose`.
+
+**Building the backend image:**
 ```bash
 # Run in the project root directory
 docker-compose build backend
 ```
 
-### Using Docker Compose
-
+**Using Docker Compose:**
 ```bash
 # Start all services
 docker-compose up -d
 
-# View logs
+# View logs for the backend
 docker-compose logs -f backend
 
 # Stop services
 docker-compose down
-```
-
-## Data Backup
-
-The SQLite database file is located at `data/api_key_rotator.db`. Regular backups of this file are sufficient:
-
-```bash
-# Linux
-cp data/api_key_rotator.db data/api_key_rotator.db.backup.$(date +%Y%m%d)
-
-# Windows
-copy data\api_key_rotator.db data\api_key_rotator.db.backup
-```
-
-## Testing
 
 ```bash
 # Run all tests

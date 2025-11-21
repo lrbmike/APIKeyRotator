@@ -51,34 +51,30 @@ frontend/
 
 ## 开发与部署
 
-本项目已完全容器化，无论是开发还是生产部署，都通过 Docker 和 Docker Compose 进行管理，无需在本地安装 Node.js 环境。
+本项目已完全容器化，并提供多种部署方式。
 
-### 启动开发环境
+### 方式一：单一镜像部署（推荐）
 
-请参考**项目根目录**下的 `README.md` 或 `backend/README.md` 中关于本地开发的说明。核心步骤如下：
+此前端项目是整个项目的一部分，可以作为一个单一的 Docker 镜像进行部署，其中 Go 后端直接提供前端文件的服务。这是最简单且推荐的方式。
 
-1.  在项目根目录创建并配置好 `.env` 文件。
+要使用此方法，请参阅**项目根目录**下的 `Dockerfile` 和说明。详细步骤请参见 **[Docker 部署指南](../DEPLOY_WITH_DOCKER.md)**。
+
+### 方式二：使用 Docker Compose（用于本地开发或独立部署）
+
+此方法适用于支持热重载的本地开发，或者当您希望在不同的容器中独立部署前端和后端时。
+
+#### 启动开发环境
+
+请参考项目根目录 `README.md` 中的说明。核心步骤如下：
+
+1.  在项目根目录创建并配置 `.env` 文件。
 2.  在项目根目录运行 `docker-compose up --build`。
 
-Docker Compose 会自动完成所有工作，包括：
-*   构建前端开发镜像 (`target: development`)。
-*   安装所有 npm 依赖。
-*   启动 Vite 开发服务器。
+Docker Compose 会自动处理开发镜像的构建、依赖安装和 Vite 服务器的启动。您可以在 `http://localhost:5173` 访问应用，任何文件更改都会触发热重载。
 
-启动后，你可以通过 `http://localhost:5173` 访问前端应用。由于源码被挂载到容器中，任何对 `frontend/src` 目录下的文件修改都会触发**热重载**。
+#### 生产环境部署
 
-### 生产环境部署
-
-生产环境的部署同样由 Docker Compose (`docker-compose.prod.yml`) 管理。
-
-当执行 `docker-compose -f docker-compose.prod.yml up --build` 时，Docker 会执行 `frontend/Dockerfile` 中的生产构建流程：
-1.  **构建阶段 (`builder`)**: 在一个临时的容器中，执行 `npm run build`，生成优化的静态文件到 `/app/dist` 目录。
-2.  **生产阶段 (`production`)**:
-    *   使用一个非常轻量的 `nginx:alpine` 镜像作为最终镜像。
-    *   将上一个阶段生成的 `/app/dist` 目录下的所有静态文件，复制到 Nginx 的网站根目录 `/usr/share/nginx/html`。
-    *   将项目中的 `nginx.conf` 配置文件复制到容器中，用于处理 API 反向代理和 Vue Router 的 history 模式。
-
-最终，一个只包含 Nginx 和静态文件的、高度优化的镜像被创建并运行，提供了高性能和高安全性的前端服务。
+使用 Docker Compose 的生产环境部署在 `docker-compose.prod.yml` 中定义。当您运行 `docker-compose -f docker-compose.prod.yml up --build` 时，它会构建一个优化的、轻量级的 Nginx 镜像来为前端静态文件提供服务。
 
 ## Dockerfile 解析
 

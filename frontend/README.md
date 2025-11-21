@@ -51,34 +51,30 @@ frontend/
 
 ## Development and Deployment
 
-This project is fully containerized. Both development and production deployment are managed through Docker and Docker Compose, eliminating the need to install a Node.js environment locally.
+This project is fully containerized and offers multiple deployment methods.
 
-### Starting the Development Environment
+### Method 1: Single Image Deployment (Recommended)
 
-Please refer to the instructions on local development in the **project root's** `README.md` or `backend/README.md`. The core steps are as follows:
+This frontend is part of a larger project that can be deployed as a single Docker image, where the Go backend serves the frontend files directly. This is the simplest and recommended method.
+
+To use this method, please refer to the `Dockerfile` and instructions in the **project's root directory**. For detailed steps, see the **[Docker Deployment Guide](../DEPLOY_WITH_DOCKER.md)**.
+
+### Method 2: Using Docker Compose (For local development or separate deployments)
+
+This method is suitable for local development with hot-reloading or if you wish to deploy the frontend and backend in separate containers.
+
+#### Starting the Development Environment
+
+Please refer to the instructions in the project root's `README.md`. The core steps are:
 
 1.  Create and configure the `.env` file in the project root.
 2.  Run `docker-compose up --build` in the project root.
 
-Docker Compose will handle everything automatically, including:
-*   Building the frontend development image (`target: development`).
-*   Installing all npm dependencies.
-*   Starting the Vite development server.
+Docker Compose will automatically handle building the development image, installing dependencies, and starting the Vite server. You can access the application at `http://localhost:5173`, and any file changes will trigger hot reloading.
 
-After startup, you can access the frontend application at `http://localhost:5173`. Since the source code is mounted into the container, any changes to files in the `frontend/src` directory will trigger **hot reloading**.
+#####PduoDey
 
-### Production Deployment
-
-Production deployment is also managed by Docker Compose (`docker-compose.prod.yml`).
-
-When you run `docker-compose -f docker-compose.prod.yml up --build`, Docker executes the production build process in `frontend/Dockerfile`:
-1.  **Build Stage (`builder`)**: In a temporary container, `npm run build` is executed to generate optimized static files in the `/app/dist` directory.
-2.  **Production Stage (`production`)**:
-    *   A very lightweight `nginx:alpine` image is used as the final image.
-    *   All static files from the `/app/dist` directory of the previous stage are copied to the Nginx web root `/usr/share/nginx/html`.
-    *   The project's `nginx.conf` file is copied into the container to handle API reverse proxying and Vue Router's history mode.
-
-Ultimately, a highly optimized image containing only Nginx and static files is created and run, providing a high-performance and secure frontend service.
+The production deployment with Docker Compose is defined in `docker-compose.prod.yml`. When you run `docker-compose -f docker-compose.prod.yml up --build`, it builds an optimized, lightweight Nginx image to serve the frontend static files.
 
 ## Dockerfile Explained
 

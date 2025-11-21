@@ -50,9 +50,31 @@ The project includes a high-performance **Go backend** and a simple, easy-to-use
 
 ## Quick Start
 
-This project is fully containerized, and it is recommended to use Docker Compose for one-click deployment and development.
+This project supports multiple containerization methods. You can choose the one that best suits your needs.
 
-### 1. Prerequisites
+### Method 1: Single Docker Image Deployment (Recommended for PaaS platforms like Render)
+
+We provide a `Dockerfile` in the root directory that packages the frontend and backend into a single image. This is the simplest way to deploy and is highly recommended for cloud platforms.
+
+1.  **Build the Image**:
+    ```bash
+    docker build -t api-key-rotator .
+    ```
+
+2.  **Run the Container**:
+    ```bash
+    docker run -d -p 8000:8000 --name api-key-rotator-app -v $(pwd)/backend/data:/app/data api-key-rotator
+    ```
+
+After running, you can access the application at `http://localhost:8000`.
+
+For more detailed instructions, including how to deploy on Render, please see our **[Docker Deployment Guide](./DEPLOY_WITH_DOCKER.md)**.
+
+### Method 2: Using Docker Compose (For local development and multi-container setups)
+
+This method is suitable for local development as it supports hot-reloading.
+
+#### 1. Prerequisites
 
 Ensure that [Docker](https://www.docker.com/) and [Docker Compose](https://docs.docker.com/compose/install/) are installed on your system.
 
@@ -286,8 +308,104 @@ If you want to dive deeper into the code, please refer to the following document
 *   **[Backend Development Guide](./backend/README.md)** - Go backend details
 *   **[Frontend Development Guide](./frontend/README.md)** - Vue 3 frontend details
 *   **[Quick Start Guide](./QUICKSTART.md)** - Detailed quick start steps
-*   **[Deployment Guide](./DEPLOYMENT.md)** - Complete deployment instructions
 *   **[Technical Decisions](./TECHNICAL_DECISIONS.md)** - Technical decision explanations
+
+## Deployment
+
+### Prerequisites
+
+Before you begin, ensure that [Docker](https://docs.docker.com/get-docker/) is installed on your local machine. You can download and install it from the official Docker website.
+
+After installation, you can verify it with the following command:
+
+```bash
+docker --version
+```
+
+### Building the Docker Image
+
+We recommend using the `Dockerfile` in the project root to build a unified image that includes both the frontend and backend. The Go backend will serve the frontend static files.
+
+In the project's root directory, open a terminal and run the following command:
+
+```bash
+docker build -t api-key-rotator .
+```
+
+This command does the following:
+- `-t api-key-rotator`: Assigns a name (tag) to your image.
+- `.`：Tells Docker to look for the `Dockerfile` in the current directory.
+
+The build process may take a few minutes as it needs to download dependencies and compile the code.
+
+### Running the Docker Container
+
+Once the image is built, you can run it with the following command:
+
+```bash
+docker run -d -p 8000:8000 --name api-key-rotator-app -v $(pwd)/backend/data:/app/data api-key-rotator
+```
+
+Command explanation:
+- `-d`: Runs the container in detached mode (in the background).
+- `-p 8000:8000`: Maps port `8000` of the container to port `8000` on your host. You can then access the application at `http://localhost:8000`.
+- `--name api-key-rotator-app`: Assigns a name to your container for easy management.
+- `-v $(pwd)/backend/data:/app/data`: Mounts the local `backend/data` directory (which contains the SQLite database file) to the `/app/data` directory in the container. **This is very important** as it ensures your data persists even if the container is restarted or deleted.
+- `api-key-rotator`: Specifies the name of the image to run.
+
+After the container starts, you can open `http://localhost:8000` in your browser to access the application.
+
+### Access URL Explanation
+
+When you access `http://localhost:8000`:
+
+- **Frontend Application**: Opening `http://localhost:8000` in your browser will show you the frontend user interface built with Vue.js.
+- **Backend API**: All backend API services are accessible via the `/api` prefix. For example:
+  - Login endpoint: `http://localhost:8000/api/admin/login`
+  - Get configs endpoint: `http://localhost:8000/api/admin/proxy-configs`
+  - Proxy service endpoint: `http://localhost:8000/api/proxy/...`
+
+The Go backend serves as both the web server and the API server.
+
+### Deploying on Render
+
+[Render](https://render.com/) provides excellent support for Docker deployments. You can follow these steps to deploy your project on Render:
+
+1.  **Push your code to GitHub/GitLab**: Ensure all your code, including the new `Dockerfile`, is committed and pushed to your repository.
+
+2.  **Create a New Service on Render**:
+    - Log in to Render and click "New" -> "Web Service".
+    - Connect your GitHub or GitLab account and select your project repository.
+
+3.  **Configure the Service**:
+    - **Environment**: Select `Docker`.
+    - **Name**: Give your service a name.
+    - **Root Directory**: Leave this blank as our `Dockerfile` is in the root.
+    - **Port**: In the "Advanced" settings, ensure the "Port" is set to `8000`, matching the port exposed in our `Dockerfile`.
+    - **Persistent Storage** (Optional but recommended): To persist your SQLite database, you can add a "Disk":
+        - **Mount Path**: Set to `/app/data`.
+        - **Size**: Choose a disk size according to your needs.
+
+4.  **Add Environment Variables**: If your application requires environment variables (e.g., those defined in the `.env` file), you need to configure them in Render's "Environment" tab.
+
+5.  **Deploy**: Click "Create Web Service", and Render will automatically pull your code, build the image using the `Dockerfile`, and deploy your application.
+
+Once deployed, Render will provide you with a public URL to access your application.
+
+### (Optional) Building Frontend and Backend Separately
+
+If you wish to build and run the frontend or backend separately, you can still use the `frontend/Dockerfile` and `backend/Dockerfile`.
+
+- **Build Frontend**:
+  ```bash
+  docker build -t frontend-app -f frontend/Dockerfile .
+  ```
+- **Build Backend**:
+  ```bash
+  docker build -t backend-app -f backend/Dockerfile .
+  ```
+
+This approach is more suitable for development or scenarios where you need to deploy the frontend and backend separately.
 
 ## FAQ
 
