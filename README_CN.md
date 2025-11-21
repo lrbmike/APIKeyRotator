@@ -339,25 +339,23 @@ docker build -t api-key-rotator .
 
 ### 运行 Docker 容器
 
-要运行容器，您首先需要在项目根目录中准备一个 `.env` 文件，以提供必要的环境变量。您可以从模板创建它：
+您可以通过在命令行中直接传递所需的环境变量来运行容器。这种方法使得基本配置更加明确。
 
 ```bash
-cp .env.example .env
-```
-请务必编辑 `.env` 文件，设置您想要的密码和密钥。
-
-当 `.env` 文件准备好后，使用以下命令运行容器：
-
-```bash
-docker run -d -p 8000:8000 --name api-key-rotator-app --env-file ./.env -v $(pwd)/backend/data:/app/data api-key-rotator
+docker run -d -p 8000:8000 --name api-key-rotator-app \
+  -e ADMIN_PASSWORD="your_strong_password" \
+  -e JWT_SECRET="your_very_secret_and_random_jwt_key" \
+  -e GLOBAL_PROXY_KEYS="your_secure_global_proxy_key" \
+  -v $(pwd)/backend/data:/app/data \
+  api-key-rotator
 ```
 
-命令解释：
+命令解释:
 - `-d`：以后台模式运行容器。
 - `-p 8000:8000`：将容器的 `8000` 端口映射到您主机的 `8000` 端口。
 - `--name api-key-rotator-app`：为您的容器指定一个名称。
-- `--env-file ./.env`：将 `.env` 文件中的环境变量加载到容器中。这是管理配置的标准方式。
-- `-v $(pwd)/backend/data:/app/data`：将本地的 `backend/data` 目录（包含 SQLite 数据库）挂载到容器中，以持久化数据。
+- `-e VAR="value"`：在容器内设置一个环境变量。您 **必须** 为 `ADMIN_PASSWORD`, `JWT_SECRET`, 和 `GLOBAL_PROXY_KEYS` 提供值。
+- `-v $(pwd)/backend/data:/app/data`：将本地的 `backend/data` 目录挂载到容器的 `/app/data` 路径。**这对数据持久化至关重要。** 如果没有这个卷挂载，您保存的任何数据（如新的API密钥或配置）都将在容器被移除时永久丢失。
 - `api-key-rotator`：指定要运行的镜像。
 
 容器启动后，您就可以在浏览器中打开 `http://localhost:8000` 来访问您的应用了。

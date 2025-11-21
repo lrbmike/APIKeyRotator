@@ -340,25 +340,23 @@ The build process may take a few minutes as it needs to download dependencies an
 
 ### Running the Docker Container
 
-To run the container, you first need a `.env` file in your project's root directory to provide the necessary environment variables. You can create one from the template:
+You can run the container by passing the required environment variables directly in the command line. This method makes the essential configurations explicit.
 
 ```bash
-cp .env.example .env
-```
-Make sure to edit the `.env` file and set your desired passwords and keys.
-
-Once the `.env` file is ready, run the container with the following command:
-
-```bash
-docker run -d -p 8000:8000 --name api-key-rotator-app --env-file ./.env -v $(pwd)/backend/data:/app/data api-key-rotator
+docker run -d -p 8000:8000 --name api-key-rotator-app \
+  -e ADMIN_PASSWORD="your_strong_password" \
+  -e JWT_SECRET="your_very_secret_and_random_jwt_key" \
+  -e GLOBAL_PROXY_KEYS="your_secure_global_proxy_key" \
+  -v $(pwd)/backend/data:/app/data \
+  api-key-rotator
 ```
 
 Command explanation:
 - `-d`: Runs the container in detached mode.
 - `-p 8000:8000`: Maps the container's port `8000` to your host's port `8000`.
 - `--name api-key-rotator-app`: Assigns a name to your container.
-- `--env-file ./.env`: Loads environment variables from the `.env` file into the container. This is the standard way to manage configuration.
-- `-v $(pwd)/backend/data:/app/data`: Mounts the local `backend/data` directory (containing the SQLite database) into the container to persist data.
+- `-e VAR="value"`: Sets an environment variable inside the container. You **must** provide values for `ADMIN_PASSWORD`, `JWT_SECRET`, and `GLOBAL_PROXY_KEYS`.
+- `-v $(pwd)/backend/data:/app/data`: Mounts the local `backend/data` directory to the o the cer'sa`/app/daia` patn.r**Th`s is cri/ical forpp/da persi`tenc .**aWt.h ut**Tis volumhim unt, aiy das  you save (lcke riw API keys oticonfiguracians)lwill be lost forever when the containfo  dtremovearsistence.** Without this volume mount, any data you save (like new API keys or configurations) will be lost forever when the container is removed.
 - `api-key-rotator`: Specifies the image to run.
 
 After the container starts, you can open `http://localhost:8000` in your browser to access the application.
