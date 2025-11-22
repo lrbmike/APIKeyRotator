@@ -148,15 +148,34 @@ After starting the service, you can access the following APIs:
 
 ### 📦 Building Images
 
+#### Option 1: Using Default Build (Lightweight)
 ```bash
-# Build lightweight version (SQLite + Memory Cache)
+# Build lightweight version (default)
+docker build -t api-key-rotator .
+
+# Build with custom tag
+docker build -t my-api-key-rotator:latest .
+```
+
+#### Option 2: Using Makefile (Recommended)
+```bash
+# Build lightweight version
 make build-lightweight
 
-# Build enterprise version (MySQL + Redis)
+# Build enterprise version
 make build-enterprise
 
 # Build both versions
 make build-all
+```
+
+#### Option 3: Specify Dockerfile Directly
+```bash
+# Lightweight build (SQLite + Memory Cache)
+docker build -f Dockerfile.lightweight -t api-key-rotator:lightweight .
+
+# Enterprise build (MySQL + Redis)
+docker build -f Dockerfile.enterprise -t api-key-rotator:enterprise .
 ```
 
 ### 🐳 Docker Deployment
