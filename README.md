@@ -164,6 +164,14 @@ docker build -f Dockerfile.enterprise -t api-key-rotator:enterprise .
 
 ### 🐳 Docker Deployment
 
+#### Quick Deployment (Recommended for Beginners)
+If you prefer the simplest approach, you can switch to the `sqlite` branch directly:
+```bash
+git checkout sqlite
+docker-compose up -d
+```
+The `sqlite` branch is a pure SQLite + memory cache version with simpler configuration, ideal for quick testing.
+
 #### Lightweight Version Deployment
 ```bash
 docker-compose up -d

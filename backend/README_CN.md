@@ -126,6 +126,15 @@ docker build -f Dockerfile.enterprise -t api-key-rotator:enterprise .
 
 根据需求运行相应的compose文件：
 
+#### 快速部署（推荐新手）
+如果您想使用最简单的方式，可以直接切换到 `sqlite` 分支：
+```bash
+git checkout sqlite
+docker-compose up -d
+```
+`sqlite` 分支是纯SQLite + 内存缓存版本，配置更简单，适合快速体验。
+
+#### 当前分支部署
 ```bash
 # 轻量级版本部署
 docker-compose -f docker-compose.yml up -d

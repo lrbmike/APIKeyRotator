@@ -126,6 +126,15 @@ docker build -f Dockerfile.enterprise -t api-key-rotator:enterprise .
 
 Run the appropriate compose file based on your needs:
 
+#### Quick Deployment (Recommended for Beginners)
+If you prefer the simplest approach, you can switch to the `sqlite` branch directly:
+```bash
+git checkout sqlite
+docker-compose up -d
+```
+The `sqlite` branch is a pure SQLite + memory cache version with simpler configuration, ideal for quick testing.
+
+#### Current Branch Deployment
 ```bash
 # Lightweight version deployment
 docker-compose -f docker-compose.yml up -d
