@@ -1,6 +1,6 @@
 <template>
   <el-dialog v-model="visible" :title="t('keyManager.title', { name: configName })" width="60%" @close="handleClose">
-    
+
     <!-- 添加新Key的表单 -->
     <el-form :inline="true" :model="newKeyForm" class="add-key-form">
       <el-form-item :label="t('keyManager.newKey')">
@@ -9,6 +9,9 @@
       <el-form-item>
         <el-button type="primary" @click="handleAddNewKey" :loading="addLoading">{{ t('keyManager.add') }}</el-button>
         <el-button type="success" @click="showBatchImport = true">{{ t('keyManager.batchImport') }}</el-button>
+        <el-button type="danger" @click="handleClearAllKeys" :loading="clearAllLoading" :disabled="keys.length === 0">
+          {{ t('keyManager.clearAll') }}
+        </el-button>
       </el-form-item>
     </el-form>
 
@@ -69,8 +72,8 @@
 
 <script setup>
 import { ref, reactive, watch } from 'vue'
-import { getKeysForConfig, addApiKeyToConfig, updateApiKeyStatus, deleteApiKey, batchImportApiKeys } from '../api'
-import { ElMessage } from 'element-plus'
+import { getKeysForConfig, addApiKeyToConfig, updateApiKeyStatus, deleteApiKey, batchImportApiKeys, clearAllApiKeys } from '../api'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import { useI18n } from 'vue-i18n'
 
 const { t } = useI18n()
@@ -88,6 +91,7 @@ const keys = ref([])
 const loading = ref(false)
 const addLoading = ref(false)
 const batchImportLoading = ref(false)
+const clearAllLoading = ref(false)
 const showBatchImport = ref(false)
 
 const newKeyForm = reactive({
@@ -219,6 +223,49 @@ const handleBatchImport = async () => {
     batchImportLoading.value = false;
   }
 }
+
+// 处理清除所有Keys
+const handleClearAllKeys = async () => {
+  if (keys.value.length === 0) {
+    ElMessage.warning(t('keyManager.messages.noKeysToClear'));
+    return;
+  }
+
+  try {
+    await ElMessageBox.confirm(
+      t('keyManager.clearAllConfirm', { count: keys.value.length }),
+      t('keyManager.clearAllTitle'),
+      {
+        confirmButtonText: t('keyManager.clearAllConfirmBtn'),
+        cancelButtonText: t('common.cancel'),
+        type: 'warning',
+        confirmButtonClass: 'el-button--danger'
+      }
+    );
+
+    await confirmClearAllKeys();
+  } catch (action) {
+    if (action !== 'cancel') {
+      console.error('Clear all keys dialog error:', action);
+    }
+  }
+};
+
+// 确认清除所有Keys
+const confirmClearAllKeys = async () => {
+  clearAllLoading.value = true;
+  try {
+    const response = await clearAllApiKeys(props.configId);
+    const { deleted_count } = response.data;
+
+    ElMessage.success(t('keyManager.messages.clearAllSuccess', { count: deleted_count }));
+    await fetchKeys(); // 重新加载列表
+  } catch (error) {
+    ElMessage.error(t('keyManager.messages.clearAllFailed'));
+  } finally {
+    clearAllLoading.value = false;
+  }
+};
 
 const handleClose = () => {
   emit('update:modelValue', false)

@@ -90,6 +90,11 @@ export const batchImportApiKeys = (configId, data) => {
   return apiClient.post(`/admin/proxy-configs/${configId}/keys/batch`, data);
 }
 
+// 清除指定配置的所有Keys
+export const clearAllApiKeys = (configId) => {
+  return apiClient.delete(`/admin/proxy-configs/${configId}/keys`);
+}
+
 // 获取应用公共配置
 export const getAppConfig = () => {
   return apiClient.get('/admin/app-config');

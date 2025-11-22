@@ -98,6 +98,10 @@
         "batchImportPlaceholder": "Enter API keys, one per line:\n\nsk-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\nsk-yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy\nsk-zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz",
         "batchImportTip": "Enter one API key per line, the system will automatically filter empty lines and duplicate keys",
         "batchImportConfirm": "Start Import",
+        "clearAll": "Clear All",
+        "clearAllTitle": "Clear All Keys",
+        "clearAllConfirm": "Are you sure you want to clear all {count} API keys? This action cannot be undone!",
+        "clearAllConfirmBtn": "Confirm Clear",
         "deleteConfirm": "Are you sure you want to delete this key?",
         "delete": "Delete",
         "table": {
@@ -120,7 +124,10 @@
             "statusUpdateSuccess": "Status updated successfully!",
             "statusUpdateFailed": "Failed to update status",
             "deleteSuccess": "Deleted successfully!",
-            "deleteFailed": "Failed to delete"
+            "deleteFailed": "Failed to delete",
+            "noKeysToClear": "No keys to clear",
+            "clearAllSuccess": "Successfully cleared {count} API keys!",
+            "clearAllFailed": "Failed to clear keys"
         }
     },
     "langSwitcher": {
