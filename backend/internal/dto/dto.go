@@ -62,6 +62,11 @@ type BatchAPIKeyImportResponse struct {
 	FailedKeys       []string `json:"failed_keys,omitempty"`
 }
 
+// ClearAllAPIKeysResponse 清除所有API密钥响应
+type ClearAllAPIKeysResponse struct {
+	DeletedCount int `json:"deleted_count"`
+}
+
 // ProxyConfigResponse 代理配置的统一响应
 type ProxyConfigResponse struct {
 	ID             int32           `json:"id"`

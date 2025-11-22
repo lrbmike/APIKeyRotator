@@ -87,6 +87,7 @@ func Setup(cfg *config.Config, db *gorm.DB, cacheClient *cache.Client) *gin.Engi
 			adminAPI.GET("/proxy-configs/:id/keys", managementHandler.GetKeysForConfig)
 			adminAPI.POST("/proxy-configs/:id/keys", managementHandler.CreateAPIKeyForConfig)
 			adminAPI.POST("/proxy-configs/:id/keys/batch", managementHandler.BatchCreateAPIKeys)
+			adminAPI.DELETE("/proxy-configs/:id/keys", managementHandler.ClearAllAPIKeys)
 			adminAPI.PATCH("/keys/:keyID", managementHandler.UpdateAPIKeyStatus)
 			adminAPI.DELETE("/keys/:keyID", managementHandler.DeleteAPIKey)
 		}

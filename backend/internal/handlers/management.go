@@ -373,6 +373,43 @@ func (h *ManagementHandler) BatchCreateAPIKeys(c *gin.Context) {
 	c.JSON(http.StatusOK, response)
 }
 
+// ClearAllAPIKeys 一键清除指定配置的所有API密钥
+func (h *ManagementHandler) ClearAllAPIKeys(c *gin.Context) {
+	id, err := h.parseID(c)
+	if err != nil {
+		return
+	}
+
+	var config models.ProxyConfig
+	if err := h.db.First(&config, id).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"detail": "ProxyConfig not found"})
+		return
+	}
+
+	// 统计要删除的key数量
+	var count int64
+	if err := h.db.Model(&models.APIKey{}).Where("proxy_config_id = ?", id).Count(&count).Error; err != nil {
+		logger.Errorf("Failed to count API keys for config %d: %v", id, err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to count API keys"})
+		return
+	}
+
+	// 批量删除所有API密钥
+	if err := h.db.Where("proxy_config_id = ?", id).Delete(&models.APIKey{}).Error; err != nil {
+		logger.Errorf("Failed to delete API keys for config %d: %v", id, err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete API keys"})
+		return
+	}
+
+	logger.Infof("Successfully deleted %d API keys for config %d (%s)", count, id, config.Name)
+
+	response := dto.ClearAllAPIKeysResponse{
+		DeletedCount: int(count),
+	}
+
+	c.JSON(http.StatusOK, response)
+}
+
 // DeleteAPIKey 删除API密钥
 func (h *ManagementHandler) DeleteAPIKey(c *gin.Context) {
 	keyID, err := h_parseKeyID(c)
