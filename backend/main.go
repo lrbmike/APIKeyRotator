@@ -4,10 +4,10 @@ import (
 	"log"
 	"os"
 
+	"api-key-rotator/backend/internal/cache"
 	"api-key-rotator/backend/internal/config"
 	"api-key-rotator/backend/internal/database"
 	"api-key-rotator/backend/internal/logger"
-	"api-key-rotator/backend/internal/redis"
 	"api-key-rotator/backend/internal/router"
 
 	"github.com/joho/godotenv"
@@ -25,16 +25,20 @@ func main() {
 	// 加载配置
 	cfg := config.Load()
 
+	// 打印当前配置信息
+	log.Printf("Database Type: %s", cfg.DBType)
+	log.Printf("Cache Type: %s", cfg.CacheType)
+
 	// 初始化数据库
 	db, err := database.Initialize(cfg)
 	if err != nil {
 		log.Fatal("Failed to initialize database:", err)
 	}
 
-	// 初始化Redis
-	redisClient, err := redis.Initialize(cfg)
+	// 初始化缓存
+	cacheClient, err := cache.Initialize(cfg)
 	if err != nil {
-		log.Fatal("Failed to initialize Redis:", err)
+		log.Fatal("Failed to initialize cache:", err)
 	}
 
 	// 创建数据库表
@@ -52,7 +56,7 @@ func main() {
 	}
 
 	// 初始化路由
-	r := router.Setup(cfg, db, redisClient)
+	r := router.Setup(cfg, db, cacheClient)
 
 	// 启动服务器
 	port := os.Getenv("BACKEND_PORT")

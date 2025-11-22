@@ -10,30 +10,33 @@ import (
 // Config 应用配置结构
 type Config struct {
 	// 数据库配置
-	DatabaseURL string
-	
-	// Redis配置
+	DBType        string // "mysql" 或 "sqlite"
+	DatabaseURL   string // MySQL连接字符串
+	DatabasePath  string // SQLite文件路径
+
+	// 缓存配置
+	CacheType     string // "redis" 或 "memory"
 	RedisURL      string
 	RedisHost     string
 	RedisPort     int
 	RedisPassword string
-	
+
 	// 服务器配置
 	Port string
-	
+
 	// JWT配置
 	JWTSecret string
-	
+
 	// 管理员配置
 	AdminUsername string
 	AdminPassword string
 	AdminUser     string // 别名，兼容性
-	
+
 	// 代理配置
 	ProxyTimeout       int
 	GlobalProxyKeys    string // 逗号分隔的多个密钥，也支持单个密钥
 	ProxyPublicBaseURL string
-	
+
 	// 日志配置
 	LogLevel string
 }
@@ -56,12 +59,18 @@ func (c *Config) GetGlobalProxyKeys() []string {
 // Load 加载配置
 func Load() *Config {
 	adminUsername := getEnv("ADMIN_USERNAME", "admin")
-	
-	// 构建数据库连接字符串
-	databaseURL := buildDatabaseURL()
-	
+
+	// 自动检测数据库类型
+	dbType := detectDatabaseType()
+
+	// 自动检测缓存类型
+	cacheType := detectCacheType()
+
 	config := &Config{
-		DatabaseURL:        databaseURL,
+		DBType:             dbType,
+		DatabaseURL:        buildDatabaseURL(),
+		DatabasePath:       getEnv("DATABASE_PATH", "/app/data/api_key_rotator.db"),
+		CacheType:          cacheType,
 		RedisURL:           getEnv("REDIS_URL", "redis://localhost:6379/0"),
 		RedisHost:          getEnv("REDIS_HOST", "localhost"),
 		RedisPort:          getEnvAsInt("REDIS_PORT", 6379),
@@ -76,7 +85,7 @@ func Load() *Config {
 		ProxyPublicBaseURL: getEnv("PROXY_PUBLIC_BASE_URL", "http://localhost:8000"),
 		LogLevel:           getEnv("LOG_LEVEL", "info"),
 	}
-	
+
 	return config
 }
 
@@ -114,4 +123,45 @@ func getEnvAsInt(key string, defaultValue int) int {
 		}
 	}
 	return defaultValue
+}
+
+// detectDatabaseType 自动检测数据库类型
+// 检测到MySQL相关环境变量则使用MySQL，否则默认使用SQLite
+func detectDatabaseType() string {
+	// 检查完整的数据库URL
+	if os.Getenv("DATABASE_URL") != "" {
+		databaseURL := os.Getenv("DATABASE_URL")
+		if strings.Contains(databaseURL, "mysql") {
+			return "mysql"
+		}
+	}
+
+	// 检查MySQL特定的环境变量
+	if os.Getenv("DB_HOST") != "" ||
+	   os.Getenv("DB_USER") != "" ||
+	   os.Getenv("MYSQL_DB_HOST") != "" ||
+	   os.Getenv("MYSQL_HOST") != "" {
+		return "mysql"
+	}
+
+	// 默认使用SQLite
+	return "sqlite"
+}
+
+// detectCacheType 自动检测缓存类型
+// 检测到Redis相关环境变量则使用Redis，否则默认使用内存缓存
+func detectCacheType() string {
+	// 检查完整的Redis URL
+	if os.Getenv("REDIS_URL") != "" {
+		return "redis"
+	}
+
+	// 检查Redis特定的环境变量
+	if os.Getenv("REDIS_HOST") != "" ||
+	   os.Getenv("REDIS_PORT") != "" {
+		return "redis"
+	}
+
+	// 默认使用内存缓存
+	return "memory"
 }

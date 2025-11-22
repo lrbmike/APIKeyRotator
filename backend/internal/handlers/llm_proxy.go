@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"api-key-rotator/backend/internal/adapters"
+	"api-key-rotator/backend/internal/cache"
 	"api-key-rotator/backend/internal/config"
 	"api-key-rotator/backend/internal/logger"
 	"api-key-rotator/backend/internal/models"
@@ -16,7 +17,6 @@ import (
 	"api-key-rotator/backend/internal/utils"
 
 	"github.com/gin-gonic/gin"
-	"github.com/go-redis/redis/v8"
 	"gorm.io/gorm"
 )
 
@@ -24,15 +24,15 @@ import (
 type LLMProxyHandler struct {
 	cfg         *config.Config
 	db          *gorm.DB
-	redisClient *redis.Client
+	cacheClient cache.CacheInterface
 }
 
 // NewLLMProxyHandler 创建LLM代理处理器实例
-func NewLLMProxyHandler(cfg *config.Config, db *gorm.DB, redisClient *redis.Client) *LLMProxyHandler {
+func NewLLMProxyHandler(cfg *config.Config, db *gorm.DB, cacheClient cache.CacheInterface) *LLMProxyHandler {
 	return &LLMProxyHandler{
 		cfg:         cfg,
 		db:          db,
-		redisClient: redisClient,
+		cacheClient: cacheClient,
 	}
 }
 
@@ -79,11 +79,11 @@ func (h *LLMProxyHandler) prepareLLMRequest(c *gin.Context, slug, action string)
 
 	switch apiFormat {
 	case "openai_compatible":
-		adapter = adapters.NewOpenAIAdapter(h.cfg, h.db, h.redisClient, c, &proxyConfig, action)
+		adapter = adapters.NewOpenAIAdapter(h.cfg, h.db, h.cacheClient, c, &proxyConfig, action)
 	case "gemini_native":
-		adapter = adapters.NewGeminiAdapter(h.cfg, h.db, h.redisClient, c, &proxyConfig, action)
+		adapter = adapters.NewGeminiAdapter(h.cfg, h.db, h.cacheClient, c, &proxyConfig, action)
 	case "anthropic_native":
-		adapter = adapters.NewAnthropicAdapter(h.cfg, h.db, h.redisClient, c, &proxyConfig, action)
+		adapter = adapters.NewAnthropicAdapter(h.cfg, h.db, h.cacheClient, c, &proxyConfig, action)
 	default:
 		logger.Errorf("No adapter found for API format '%s'", apiFormat)
 		return nil, fmt.Errorf("unsupported API format '%s' for LLM service '%s'", apiFormat, slug)

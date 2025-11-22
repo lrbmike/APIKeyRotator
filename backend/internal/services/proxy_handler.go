@@ -4,13 +4,13 @@ import (
 	"context"
 	"fmt"
 
+	"api-key-rotator/backend/internal/cache"
 	"api-key-rotator/backend/internal/config"
 	"api-key-rotator/backend/internal/logger"
 	"api-key-rotator/backend/internal/models"
 	"api-key-rotator/backend/internal/utils"
 
 	"github.com/gin-gonic/gin"
-	"github.com/go-redis/redis/v8"
 	"gorm.io/gorm"
 )
 
@@ -27,7 +27,7 @@ type TargetRequest struct {
 type BaseProxyHandler struct {
 	cfg         *config.Config
 	db          *gorm.DB
-	redisClient *redis.Client
+	cacheClient cache.CacheInterface
 	C           *gin.Context // 导出字段
 	Slug        string       // 导出字段
 	action      string
@@ -35,11 +35,11 @@ type BaseProxyHandler struct {
 }
 
 // NewBaseProxyHandler 创建基础代理处理器
-func NewBaseProxyHandler(cfg *config.Config, db *gorm.DB, redisClient *redis.Client, c *gin.Context, slug, action string) *BaseProxyHandler {
+func NewBaseProxyHandler(cfg *config.Config, db *gorm.DB, cacheClient cache.CacheInterface, c *gin.Context, slug, action string) *BaseProxyHandler {
 	return &BaseProxyHandler{
 		cfg:         cfg,
 		db:          db,
-		redisClient: redisClient,
+		cacheClient: cacheClient,
 		C:           c,
 		Slug:        slug,
 		action:      action,
@@ -62,12 +62,12 @@ func (h *BaseProxyHandler) RotateAPIKey(serviceConfig *models.ProxyConfig) (stri
 		return "", fmt.Errorf("no active API keys for this service")
 	}
 
-	// 使用Redis原子性递增来实现轮询
+	// 使用缓存原子性递增来实现轮询
 	ctx := context.Background()
 	keyIndexKey := fmt.Sprintf("proxy_config:%d:key_index", serviceConfig.ID)
-	keyIndex, err := h.redisClient.Incr(ctx, keyIndexKey).Result()
+	keyIndex, err := h.cacheClient.Incr(ctx, keyIndexKey).Result()
 	if err != nil {
-		logger.Errorf("%s: Failed to increment key index in Redis: %v", h.logPrefix, err)
+		logger.Errorf("%s: Failed to increment key index in cache: %v", h.logPrefix, err)
 		return "", fmt.Errorf("failed to rotate API key")
 	}
 

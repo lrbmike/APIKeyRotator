@@ -8,6 +8,7 @@ import (
 	"net/url"
 	"strings"
 
+	"api-key-rotator/backend/internal/cache"
 	"api-key-rotator/backend/internal/config"
 	"api-key-rotator/backend/internal/logger"
 	"api-key-rotator/backend/internal/models"
@@ -15,23 +16,22 @@ import (
 	"api-key-rotator/backend/internal/utils"
 
 	"github.com/gin-gonic/gin"
-	"github.com/go-redis/redis/v8"
 	"gorm.io/gorm"
 )
 
 // ProxyHandler 通用代理处理器
 type ProxyHandler struct {
-	cfg         *config.Config
-	db          *gorm.DB
-	redisClient *redis.Client
+	cfg        *config.Config
+	db         *gorm.DB
+	cacheClient cache.CacheInterface
 }
 
 // NewProxyHandler 创建通用代理处理器实例
-func NewProxyHandler(cfg *config.Config, db *gorm.DB, redisClient *redis.Client) *ProxyHandler {
+func NewProxyHandler(cfg *config.Config, db *gorm.DB, cacheClient cache.CacheInterface) *ProxyHandler {
 	return &ProxyHandler{
-		cfg:         cfg,
-		db:          db,
-		redisClient: redisClient,
+		cfg:        cfg,
+		db:         db,
+		cacheClient: cacheClient,
 	}
 }
 
@@ -49,7 +49,7 @@ func (h *ProxyHandler) HandleGenericProxy(c *gin.Context) {
 		return
 	}
 
-	handler := services.NewBaseProxyHandler(h.cfg, h.db, h.redisClient, c, serviceSlug, "")
+	handler := services.NewBaseProxyHandler(h.cfg, h.db, h.cacheClient, c, serviceSlug, "")
 	
 	targetRequest, err := h.prepareGenericRequest(handler)
 	if err != nil {

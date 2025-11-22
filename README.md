@@ -2,32 +2,106 @@
 
 [English](README.md) | [中文简体](README_CN.md)
 
-## Branch Information
+## 🚀 Dynamic Deployment Solution
 
-This project provides two main branches to meet different deployment needs:
+**This project now supports dynamic deployment switching within a unified image** - simply select different deployment schemes through environment variables:
 
-- **`master` branch**: Standard architecture based on **MySQL + Redis** (Current branch)
-  - Suitable for high-concurrency, distributed deployment scenarios
-  - Requires external MySQL and Redis services
-  - Supports horizontal scaling and cluster deployment
-  - Better performance and scalability
-  
-- **`sqlite` branch**: Lightweight single-file deployment version
-  - Uses **SQLite + In-memory cache**
-  - Single executable file, no additional services required
-  - Suitable for small to medium-scale deployments (< 10000 QPS)
-  - Easy to backup and migrate
+### Four Deployment Modes
 
-**Current branch**: `master` - Standard architecture version
+| Mode | Database | Cache | Use Case | QPS Support |
+|------|----------|-------|----------|-------------|
+| 🟢 **Lightweight Mode** | SQLite | Memory Cache | Development, Small Projects | < 5K |
+| 🟡 **Hybrid Mode 1** | MySQL | Memory Cache | Medium Projects | < 10K |
+| 🟡 **Hybrid Mode 2** | SQLite | Redis | Small Projects needing Cache | < 8K |
+| 🔴 **Enterprise Mode** | MySQL | Redis | Production, Large Deployments | > 10K |
 
-Switch branches:
+### Smart Auto-Detection
+
+The system automatically selects deployment schemes based on environment variables:
+- **MySQL variables detected** (`DB_HOST`, `DB_USER`, etc.) → Automatically uses MySQL
+- **Redis variables detected** (`REDIS_HOST`, `REDIS_PORT`, etc.) → Automatically uses Redis
+- **No relevant variables detected** → Defaults to SQLite + Memory Cache
+
+### 📋 Complete Environment Variables
+
+#### 🔴 Database Configuration (Optional - defaults to SQLite if not set)
+
 ```bash
-# Switch to lightweight version
-git checkout sqlite
+# MySQL Connection String
+DATABASE_URL=mysql://user:password@tcp(host:port)/database?charset=utf8mb4&parseTime=True&loc=Local
 
-# Switch back to standard architecture
-git checkout master
+# OR Individual MySQL Variables
+DB_HOST=localhost
+DB_USER=appdb
+DB_PASSWORD=your_strong_password
+DB_NAME=api_key_rotator
+DB_PORT=3306
+
+# SQLite Path (only used when SQLite mode is detected)
+DATABASE_PATH=/app/data/api_key_rotator.db
 ```
+
+#### 🟠 Redis Configuration (Optional - defaults to memory cache if not set)
+
+```bash
+# Basic Redis Configuration
+REDIS_HOST=localhost          # Required to enable Redis
+REDIS_PORT=6379               # Optional, defaults to 6379
+REDIS_PASSWORD=your_password   # Optional, defaults to empty
+REDIS_URL=redis://localhost:6379/0  # Optional, alternative connection string
+REDIS_DB=0                    # Optional, defaults to 0
+```
+
+#### 🔧 Required Configuration (Must be set)
+
+```bash
+# Security Configuration (Required)
+ADMIN_PASSWORD=your_admin_password
+JWT_SECRET=your_very_long_jwt_secret
+GLOBAL_PROXY_KEYS=key1,key2,key3
+
+# Service Configuration (Optional)
+BACKEND_PORT=8000
+PROXY_PUBLIC_BASE_URL=http://localhost:8000
+LOG_LEVEL=info
+RESET_DB_TABLES=false
+```
+
+### Quick Deployment Examples
+
+**🟢 Lightweight Deployment (Recommended for small projects)**
+```bash
+docker run -d \
+  -p 8000:8000 \
+  -e ADMIN_PASSWORD="your_password" \
+  -e JWT_SECRET="your_jwt_secret" \
+  -e GLOBAL_PROXY_KEYS="your_proxy_key" \
+  -v $(pwd)/data:/app/data \
+  api-key-rotator
+```
+
+**🔴 Enterprise Deployment**
+```bash
+docker run -d \
+  -p 8000:8000 \
+  -e ADMIN_PASSWORD="your_password" \
+  -e JWT_SECRET="your_jwt_secret" \
+  -e GLOBAL_PROXY_KEYS="your_proxy_key" \
+  -e DB_HOST="mysql-server" \
+  -e DB_USER="appdb" \
+  -e DB_PASSWORD="your_db_password" \
+  -e DB_NAME="api_key_rotator" \
+  -e REDIS_HOST="redis-server" \
+  api-key-rotator
+```
+
+📖 **See deployment details below** 👇
+
+---
+
+## 🎯 Single Unified Codebase
+
+**All deployment modes are now available in a unified codebase** - Simply control the deployment mode through environment variables for automatic configuration.
 
 ## Introduction
 
@@ -37,37 +111,64 @@ Whether you need to provide high availability for traditional RESTful APIs or a 
 
 The project includes a high-performance **Go backend** and a simple, easy-to-use **Vue 3 admin panel**, with "one-click" deployment via Docker Compose.
 
-## Core Features
+## ✨ Core Features
 
-*   **Centralized Key Management**: Manage API key pools for all services in a unified web interface.
-*   **Dynamic Key Rotation**: Atomic rotation based on Redis to effectively distribute API request quotas.
-*   **Type-Safe Proxies**:
+*   **🔧 Dynamic Deployment Switching**: Single codebase supports multiple deployment schemes, intelligently selecting database and cache types through environment variables.
+*   **🔑 Centralized Key Management**: Manage API key pools for all services in a unified web interface.
+*   **🔄 Dynamic Key Rotation**: Atomic rotation based on cache (supports both memory cache and Redis) to effectively distribute API request quotas.
+*   **🚀 Type-Safe Proxies**:
     *   **Generic API Proxy (`/proxy`)**: Provides proxy services for any RESTful API.
     *   **LLM API Proxy (`/llm`)**: Offers native streaming support and an SDK-friendly `base_url` for large model APIs compatible with OpenAI's format. Supported providers include **OpenAI, Gemini, Anthropic**, etc.
-*   **Highly Extensible Architecture**: The backend uses an adapter pattern, making it easy to extend support for new types of proxy services in the future.
-*   **Secure Isolation**: All proxy requests are authenticated via global keys, with support for multiple keys to protect real backend keys from being exposed.
-*   **Dockerized Deployment**: Provides a complete Docker Compose configuration for one-click startup of the backend, frontend, database, and Redis.
+*   **🏗️ Highly Extensible Architecture**: The backend uses an adapter pattern, making it easy to extend support for new types of proxy services in the future.
+*   **🛡️ Secure Isolation**: All proxy requests are authenticated via global keys, with support for multiple keys to protect real backend keys from being exposed.
+*   **🐳 Unified Docker Support**: Single image supports all deployment modes, one-click Docker Compose deployment.
 
-## Quick Start
+## 🚀 Quick Start
 
-This project is fully containerized, and it is recommended to use Docker Compose for one-click deployment and development.
+### Method 1: Lightweight Deployment (Recommended)
 
-### 1. Prerequisites
+The simplest deployment method, only requires setting essential environment variables:
+
+```bash
+# Clone the project
+git clone https://github.com/your-repo/APIKeyRotator.git
+cd APIKeyRotator
+
+# Build the image
+docker build -t api-key-rotator .
+
+# Start the service (SQLite + Memory Cache)
+docker run -d \
+  -p 8000:8000 \
+  -e ADMIN_PASSWORD="your_password" \
+  -e JWT_SECRET="your_jwt_secret" \
+  -e GLOBAL_PROXY_KEYS="your_proxy_key" \
+  -v $(pwd)/data:/app/data \
+  api-key-rotator
+
+# Access the application
+open http://localhost:8000
+```
+
+### Method 2: Docker Compose Deployment
+
+#### 1. Prerequisites
 
 Ensure that [Docker](https://www.docker.com/) and [Docker Compose](https://docs.docker.com/compose/install/) are installed on your system.
 
-### 2. Configure the Project
-
-After cloning the project, create a `.env` file from the `.env.example` template in the project root directory.
+#### 2. Configure the Project
 
 ```bash
+# Clone the project
+git clone https://github.com/your-repo/APIKeyRotator.git
+cd APIKeyRotator
+
 # Copy the configuration file template
-cp .env.example .env
+cp .env.example.en .env
+# Or use Chinese version: cp .env.example.cn .env
 ```
 
-Then, edit the `.env` file according to your needs, at least setting sensitive information such as the database password and administrator password.
-
-#### Proxy Key Configuration
+#### 3. Proxy Key Configuration
 
 This project uses the `GLOBAL_PROXY_KEYS` environment variable to configure proxy authentication keys, supporting a single key or multiple keys:
 
@@ -81,25 +182,45 @@ This project uses the `GLOBAL_PROXY_KEYS` environment variable to configure prox
     GLOBAL_PROXY_KEYS=key1,key2,key3
     ```
 
-The multiple keys feature allows you to assign different authentication keys to different clients or services, improving security and management flexibility.
+#### 4. Start the Services
 
-### 3. Start the Services
-
-We provide standard Docker Compose configurations for development and production environments.
-
-**Development Environment**
+**🟢 Lightweight Mode (Default)**
 ```bash
-# Start with the development environment configuration
+# Copy English configuration template
+cp .env.example.en .env
+
+# Edit if needed
+nano .env
+
 docker-compose up --build -d
 ```
 
-**Production Environment**
+**🔴 Enterprise Mode**
 ```bash
-# Start with the production environment configuration
+# Copy English configuration template
+cp .env.example.en .env
+
+# Add database and cache configuration
+cat >> .env << EOF
+DB_HOST=db
+DB_USER=appdb
+DB_PASSWORD=your_db_password
+DB_NAME=api_key_rotator
+REDIS_HOST=redis
+REDIS_PASSWORD=your_redis_password
+EOF
+
 docker-compose -f docker-compose.prod.yml up --build -d
 ```
 
-#### Access URLs
+**Or use Chinese template**:
+```bash
+# Copy Chinese configuration template
+cp .env.example.cn .env
+# ... same as above
+```
+
+#### 5. Access URLs
 
 **Development Environment** (with Vite and Hot Reload):
 *   **Frontend Dev Server**: `http://localhost:5173`
@@ -231,9 +352,166 @@ In this example:
 
 The proxy will automatically forward the request to the configured target URL, appending the path and query parameters to the target address.
 
-## Development Guide
+## 📚 Technical Features
+
+*   **🔧 Smart Configuration Detection**: System automatically selects the most suitable database and cache scheme based on environment variables
+*   **⚡ High-Performance Architecture**: Supports various performance requirements from lightweight to enterprise-grade
+*   **🎯 Zero-Configuration Startup**: Default mode requires no database or cache service configuration
+*   **🔄 Seamless Upgrades**: Switch between different deployment modes without code changes
+*   **🛡️ Production-Ready**: Includes health checks, logging, error handling, and other production-grade features
+
+## 📖 Related Documentation
 
 If you want to dive deeper into the code, please refer to the following documents:
 
 *   **[Backend Development Guide](./backend/README.md)**
 *   **[Frontend Development Guide](./frontend/README.md)**
+
+## 🔧 Deployment Examples
+
+### 🟢 Ultra-Lightweight Deployment (Development)
+
+```bash
+# No database/cache services required
+docker run -d \
+  -p 8000:8000 \
+  -e ADMIN_PASSWORD="dev123" \
+  -e JWT_SECRET="dev_jwt_secret_only" \
+  -e GLOBAL_PROXY_KEYS="dev_key" \
+  -v $(pwd)/data:/app/data \
+  api-key-rotator
+```
+
+### 🟡 Hybrid Mode (Small Production)
+
+```bash
+# MySQL + Memory Cache
+docker run -d \
+  -p 8000:8000 \
+  -e ADMIN_PASSWORD="prod123" \
+  -e JWT_SECRET="prod_jwt_secret_very_long" \
+  -e GLOBAL_PROXY_KEYS="key1,key2" \
+  -e DB_HOST="mysql-server" \
+  -e DB_USER="appdb" \
+  -e DB_PASSWORD="db_password" \
+  -e DB_NAME="api_key_rotator" \
+  -v $(pwd)/data:/app/data \
+  api-key-rotator
+```
+
+### 🔴 Full Enterprise Mode
+
+```bash
+# MySQL + Redis + All Features
+docker run -d \
+  -p 8000:8000 \
+  -e ADMIN_PASSWORD="secure123" \
+  -e JWT_SECRET="enterprise_jwt_secret_extremely_long_and_secure" \
+  -e GLOBAL_PROXY_KEYS="prod_key1,prod_key2,prod_key3" \
+  -e DB_HOST="mysql.internal" \
+  -e DB_USER="appdb" \
+  -e DB_PASSWORD="secure_db_password" \
+  -e DB_NAME="api_key_rotator" \
+  -e REDIS_HOST="redis.internal" \
+  -e REDIS_PORT=6389 \
+  -e REDIS_PASSWORD="secure_redis_password" \
+  -e LOG_LEVEL=warn \
+  -v $(pwd)/data:/app/data \
+  api-key-rotator
+```
+
+### 🐳 Docker Compose Example
+
+```yaml
+version: '3.8'
+services:
+  app:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      - ADMIN_PASSWORD=your_password
+      - JWT_SECRET=your_jwt_secret
+      - GLOBAL_PROXY_KEYS=your_proxy_key
+      # Optional: Add these for enterprise mode
+      - DB_HOST=db
+      - DB_USER=appdb
+      - DB_PASSWORD=your_db_password
+      - DB_NAME=api_key_rotator
+      - REDIS_HOST=redis
+    volumes:
+      - ./data:/app/data
+    depends_on:
+      - db
+      - redis
+
+  db:
+    image: mysql:8.0
+    environment:
+      - MYSQL_ROOT_PASSWORD=your_root_password
+      - MYSQL_DATABASE=api_key_rotator
+      - MYSQL_USER=appdb
+      - MYSQL_PASSWORD=your_db_password
+    volumes:
+      - mysql_data:/var/lib/mysql
+
+  redis:
+    image: redis:7-alpine
+    command: redis-server --requirepass your_redis_password
+    volumes:
+      - redis_data:/data
+
+volumes:
+  mysql_data:
+  redis_data:
+```
+
+## ❓ Frequently Asked Questions
+
+### Q: How do I choose the right deployment mode?
+**A**:
+- **Development/Testing**: Use lightweight mode (SQLite + Memory Cache)
+- **Small Projects**: SQLite + Redis or MySQL + Memory Cache
+- **Production Environment**: MySQL + Redis
+
+### Q: How can I check which database and cache types are currently being used?
+**A**: The application displays log information when starting:
+```
+Database Type: sqlite
+Cache Type: memory
+```
+
+### Q: How do I upgrade from lightweight mode to enterprise mode?
+**A**: Simply add the corresponding environment variables, and the system will automatically detect and switch:
+```bash
+# Add MySQL configuration
+DB_HOST=mysql-server
+DB_USER=appdb
+DB_PASSWORD=your_password
+
+# Add Redis configuration
+REDIS_HOST=redis-server
+```
+
+### Q: How is data migration handled?
+**A**: The system automatically creates table structures when starting. To migrate data from SQLite to MySQL:
+
+1. **Backup SQLite data**:
+   ```bash
+   cp data/api_key_rotator.db backup_$(date +%Y%m%d).db
+   ```
+
+2. **Add MySQL environment variables**:
+   ```bash
+   -e DB_HOST="mysql-server" \
+   -e DB_USER="appdb" \
+   -e DB_PASSWORD="your_password" \
+   -e DB_NAME="api_key_rotator"
+   ```
+
+3. **Restart the application** - it will automatically create new tables in MySQL
+
+For data import, you'll need to export from SQLite and import to MySQL manually or use a migration tool.
+
+### Q: Does it support distributed deployment?
+**A**: Yes, using MySQL + Redis mode supports fully distributed deployment.

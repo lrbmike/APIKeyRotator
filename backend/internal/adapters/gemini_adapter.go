@@ -5,6 +5,7 @@ import (
 	"io"
 	"strings"
 
+	"api-key-rotator/backend/internal/cache"
 	"api-key-rotator/backend/internal/config"
 	"api-key-rotator/backend/internal/logger"
 	"api-key-rotator/backend/internal/models"
@@ -12,7 +13,6 @@ import (
 	"api-key-rotator/backend/internal/utils"
 
 	"github.com/gin-gonic/gin"
-	"github.com/go-redis/redis/v8"
 	"gorm.io/gorm"
 )
 
@@ -22,10 +22,10 @@ type GeminiAdapter struct {
 }
 
 // NewGeminiAdapter 创建Gemini适配器实例
-func NewGeminiAdapter(cfg *config.Config, db *gorm.DB, redisClient *redis.Client,
+func NewGeminiAdapter(cfg *config.Config, db *gorm.DB, cacheClient cache.CacheInterface,
 	c *gin.Context, proxyConfig *models.ProxyConfig, action string) *GeminiAdapter {
 	return &GeminiAdapter{
-		BaseLLMAdapter: NewBaseLLMAdapter(cfg, db, redisClient, c, proxyConfig, action),
+		BaseLLMAdapter: NewBaseLLMAdapter(cfg, db, cacheClient, c, proxyConfig, action),
 	}
 }
 

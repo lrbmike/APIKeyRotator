@@ -2,32 +2,106 @@
 
 [English](README.md) | [中文简体](README_CN.md)
 
-## 分支说明
+## 🚀 动态部署方案
 
-本项目提供两个主要分支，满足不同的部署需求：
+**本项目现已支持统一镜像中的动态部署切换**，通过环境变量即可选择不同的部署方案：
 
-- **`master` 分支**：基于 **MySQL + Redis** 的标准架构（当前分支）
-  - 适合高并发、分布式部署场景
-  - 需要外部 MySQL 和 Redis 服务
-  - 支持横向扩展和集群部署
-  - 更好的性能和可扩展性
-  
-- **`sqlite` 分支**：轻量级单文件部署版本
-  - 使用 **SQLite + 内存缓存**
-  - 单一可执行文件，无需额外服务
-  - 适合中小规模部署（< 10000 QPS）
-  - 易于备份和迁移
+### 四种部署模式
 
-**当前分支**: `master` - 标准架构版本
+| 模式 | 数据库 | 缓存 | 适用场景 | QPS支持 |
+|------|--------|------|----------|---------|
+| 🟢 **轻量级模式** | SQLite | 内存缓存 | 开发测试、小型项目 | < 5K |
+| 🟡 **混合模式1** | MySQL | 内存缓存 | 中等规模项目 | < 10K |
+| 🟡 **混合模式2** | SQLite | Redis | 需要缓存的小型项目 | < 8K |
+| 🔴 **企业级模式** | MySQL | Redis | 生产环境、大型部署 | > 10K |
 
-切换分支：
+### 智能自动检测
+
+系统根据环境变量自动选择部署方案：
+- **检测到MySQL环境变量** (`DB_HOST`, `DB_USER` 等) → 自动使用MySQL
+- **检测到Redis环境变量** (`REDIS_HOST`, `REDIS_PORT` 等) → 自动使用Redis
+- **未检测到相关变量** → 默认使用SQLite + 内存缓存
+
+### 📋 完整环境变量配置
+
+#### 🔴 数据库配置（可选 - 不设置则默认使用SQLite）
+
 ```bash
-# 切换到轻量级版本
-git checkout sqlite
+# MySQL连接字符串
+DATABASE_URL=mysql://user:password@tcp(host:port)/database?charset=utf8mb4&parseTime=True&loc=Local
 
-# 切换回标准架构
-git checkout master
+# 或分离的MySQL变量
+DB_HOST=localhost
+DB_USER=appdb
+DB_PASSWORD=your_strong_password
+DB_NAME=api_key_rotator
+DB_PORT=3306
+
+# SQLite路径（仅在SQLite模式时生效）
+DATABASE_PATH=/app/data/api_key_rotator.db
 ```
+
+#### 🟠 Redis配置（可选 - 不设置则默认使用内存缓存）
+
+```bash
+# 基础Redis配置
+REDIS_HOST=localhost          # 启用Redis的必需变量
+REDIS_PORT=6379               # 可选，默认6379
+REDIS_PASSWORD=your_password   # 可选，默认空字符串
+REDIS_URL=redis://localhost:6379/0  # 可选，另一种连接字符串
+REDIS_DB=0                    # 可选，默认0
+```
+
+#### 🔧 必需配置（必须设置）
+
+```bash
+# 安全配置（必需）
+ADMIN_PASSWORD=your_admin_password
+JWT_SECRET=your_very_long_jwt_secret
+GLOBAL_PROXY_KEYS=key1,key2,key3
+
+# 服务配置（可选）
+BACKEND_PORT=8000
+PROXY_PUBLIC_BASE_URL=http://localhost:8000
+LOG_LEVEL=info
+RESET_DB_TABLES=false
+```
+
+### 快速部署示例
+
+**🟢 轻量级部署（推荐用于小型项目）**
+```bash
+docker run -d \
+  -p 8000:8000 \
+  -e ADMIN_PASSWORD="your_password" \
+  -e JWT_SECRET="your_jwt_secret" \
+  -e GLOBAL_PROXY_KEYS="your_proxy_key" \
+  -v $(pwd)/data:/app/data \
+  api-key-rotator
+```
+
+**🔴 企业级部署**
+```bash
+docker run -d \
+  -p 8000:8000 \
+  -e ADMIN_PASSWORD="your_password" \
+  -e JWT_SECRET="your_jwt_secret" \
+  -e GLOBAL_PROXY_KEYS="your_proxy_key" \
+  -e DB_HOST="mysql-server" \
+  -e DB_USER="appdb" \
+  -e DB_PASSWORD="your_db_password" \
+  -e DB_NAME="api_key_rotator" \
+  -e REDIS_HOST="redis-server" \
+  api-key-rotator
+```
+
+📖 **详细部署信息请看下文** 👇
+
+---
+
+## 🎯 单一统一代码库
+
+**所有部署模式现在都在统一代码库中** - 只需通过环境变量控制部署模式，系统将自动配置。
 
 ## 项目简介
 
@@ -37,37 +111,64 @@ git checkout master
 
 该项目包含一个高性能的 **Go 后端** 和一个简洁易用的 **Vue 3 管理后台**，并通过 Docker Compose 实现了"一键式"部署。
 
-## 核心功能
+## ✨ 核心功能
 
-*   **集中化密钥管理**: 在Web界面统一管理所有服务的API密钥池。
-*   **动态密钥轮询**: 基于Redis实现的原子性轮询，有效分摊API请求配额。
-*   **类型安全的代理**:
+*   **🔧 动态部署切换**: 单一代码库支持多种部署方案，通过环境变量智能选择数据库和缓存类型。
+*   **🔑 集中化密钥管理**: 在Web界面统一管理所有服务的API密钥池。
+*   **🔄 动态密钥轮询**: 基于缓存实现的原子性轮询，支持内存缓存和Redis，有效分摊API请求配额。
+*   **🚀 类型安全的代理**:
     *   **通用API代理 (`/proxy`)**: 为任何RESTful API提供代理服务。
     *   **LLM API代理 (`/llm`)**: 为兼容OpenAI格式的大模型API提供原生流式支持和SDK友好的`base_url`。目前支持的接口格式包括 **OpenAI, Gemini, Anthropic** 等。
-*   **高度可扩展架构**: 后端采用适配器模式，未来可轻松扩展支持任何新类型的代理服务。
-*   **安全隔离**: 所有代理请求均通过全局密钥进行认证，支持配置多个密钥，保护后端真实密钥不被泄露。
-*   **Docker化部署**: 提供完整的 Docker Compose 配置，一键启动后端、前端、数据库和 Redis。
+*   **🏗️ 高度可扩展架构**: 后端采用适配器模式，未来可轻松扩展支持任何新类型的代理服务。
+*   **🛡️ 安全隔离**: 所有代理请求均通过全局密钥进行认证，支持配置多个密钥，保护后端真实密钥不被泄露。
+*   **🐳 统一Docker化**: 单一镜像支持所有部署模式，Docker Compose一键部署。
 
-## 快速开始
+## 🚀 快速开始
 
-本项目已完全容器化，推荐使用 Docker Compose 进行一键部署和开发。
+### 方式一：轻量级部署（推荐）
 
-### 1. 环境准备
+最简单的部署方式，只需设置必需的环境变量：
+
+```bash
+# 克隆项目
+git clone https://github.com/your-repo/APIKeyRotator.git
+cd APIKeyRotator
+
+# 构建镜像
+docker build -t api-key-rotator .
+
+# 启动服务（SQLite + 内存缓存）
+docker run -d \
+  -p 8000:8000 \
+  -e ADMIN_PASSWORD="your_password" \
+  -e JWT_SECRET="your_jwt_secret" \
+  -e GLOBAL_PROXY_KEYS="your_proxy_key" \
+  -v $(pwd)/data:/app/data \
+  api-key-rotator
+
+# 访问应用
+open http://localhost:8000
+```
+
+### 方式二：Docker Compose 部署
+
+#### 1. 环境准备
 
 确保您的系统中已经安装了 [Docker](https://www.docker.com/) 和 [Docker Compose](https://docs.docker.com/compose/install/)。
 
-### 2. 配置项目
-
-克隆本项目后，在项目根目录下，从 `.env.example` 模板创建一个 `.env` 文件。
+#### 2. 配置项目
 
 ```bash
+# 克隆项目
+git clone https://github.com/your-repo/APIKeyRotator.git
+cd APIKeyRotator
+
 # 复制配置文件模板
-cp .env.example .env
+cp .env.example.cn .env
+# 或使用英文版本: cp .env.example.en .env
 ```
 
-然后，根据你的需要编辑 `.env` 文件，至少需要设置数据库密码和管理员密码等敏感信息。
-
-#### 代理密钥配置
+#### 3. 代理密钥配置
 
 本项目使用 `GLOBAL_PROXY_KEYS` 环境变量配置代理认证密钥，支持单个密钥或多个密钥：
 
@@ -81,25 +182,45 @@ cp .env.example .env
     GLOBAL_PROXY_KEYS=key1,key2,key3
     ```
 
-多个密钥功能允许您为不同的客户端或服务分配不同的认证密钥，提高安全性和管理灵活性。
+#### 4. 启动服务
 
-### 3. 启动服务
-
-我们提供了标准的 Docker Compose 配置，支持开发和生产环境。
-
-**开发环境**
+**🟢 轻量级模式 (默认)**
 ```bash
-# 使用开发环境配置启动
+# 复制中文配置模板
+cp .env.example.cn .env
+
+# 根据需要编辑配置
+nano .env
+
 docker-compose up --build -d
 ```
 
-**生产环境**
+**🔴 企业级模式**
 ```bash
-# 使用生产环境配置启动
+# 复制中文配置模板
+cp .env.example.cn .env
+
+# 添加数据库和缓存配置
+cat >> .env << EOF
+DB_HOST=db
+DB_USER=appdb
+DB_PASSWORD=your_db_password
+DB_NAME=api_key_rotator
+REDIS_HOST=redis
+REDIS_PASSWORD=your_redis_password
+EOF
+
 docker-compose -f docker-compose.prod.yml up --build -d
 ```
 
-#### 访问地址
+**或使用英文模板**:
+```bash
+# 复制英文配置模板
+cp .env.example.en .env
+# ... 同上操作
+```
+
+#### 5. 访问地址
 
 **开发环境** (使用 Vite 和热重载):
 *   **前端开发服务器**: `http://localhost:5173`
@@ -232,9 +353,166 @@ else:
 
 代理会自动将请求转发到配置的目标URL，并将路径和查询参数附加到目标地址上。
 
-## 开发指南
+## 📚 技术特点
+
+*   **🔧 智能配置检测**: 系统根据环境变量自动选择最适合的数据库和缓存方案
+*   **⚡ 高性能架构**: 支持从轻量级到企业级的各种性能需求
+*   **🎯 零配置启动**: 默认模式下无需任何数据库或缓存服务配置
+*   **🔄 无缝升级**: 可在不同部署模式间无缝切换，无需修改代码
+*   **🛡️ 生产就绪**: 包含健康检查、日志记录、错误处理等生产级特性
+
+## 📖 相关文档
 
 如果您希望深入代码功能，请参考以下文档：
 
 *   **[后端开发指南](./backend/README.md)**
 *   **[前端开发指南](./frontend/README.md)**
+
+## 🔧 部署示例
+
+### 🟢 超轻量级部署（开发环境）
+
+```bash
+# 无需数据库/缓存服务
+docker run -d \
+  -p 8000:8000 \
+  -e ADMIN_PASSWORD="dev123" \
+  -e JWT_SECRET="dev_jwt_secret_only" \
+  -e GLOBAL_PROXY_KEYS="dev_key" \
+  -v $(pwd)/data:/app/data \
+  api-key-rotator
+```
+
+### 🟡 混合模式（小型生产环境）
+
+```bash
+# MySQL + 内存缓存
+docker run -d \
+  -p 8000:8000 \
+  -e ADMIN_PASSWORD="prod123" \
+  -e JWT_SECRET="prod_jwt_secret_very_long" \
+  -e GLOBAL_PROXY_KEYS="key1,key2" \
+  -e DB_HOST="mysql-server" \
+  -e DB_USER="appdb" \
+  -e DB_PASSWORD="db_password" \
+  -e DB_NAME="api_key_rotator" \
+  -v $(pwd)/data:/app/data \
+  api-key-rotator
+```
+
+### 🔴 完整企业级部署
+
+```bash
+# MySQL + Redis + 全功能
+docker run -d \
+  -p 8000:8000 \
+  -e ADMIN_PASSWORD="secure123" \
+  -e JWT_SECRET="enterprise_jwt_secret_extremely_long_and_secure" \
+  -e GLOBAL_PROXY_KEYS="prod_key1,prod_key2,prod_key3" \
+  -e DB_HOST="mysql.internal" \
+  -e DB_USER="appdb" \
+  -e DB_PASSWORD="secure_db_password" \
+  -e DB_NAME="api_key_rotator" \
+  -e REDIS_HOST="redis.internal" \
+  -e REDIS_PORT=6389 \
+  -e REDIS_PASSWORD="secure_redis_password" \
+  -e LOG_LEVEL=warn \
+  -v $(pwd)/data:/app/data \
+  api-key-rotator
+```
+
+### 🐳 Docker Compose 示例
+
+```yaml
+version: '3.8'
+services:
+  app:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      - ADMIN_PASSWORD=your_password
+      - JWT_SECRET=your_jwt_secret
+      - GLOBAL_PROXY_KEYS=your_proxy_key
+      # 可选：企业级模式添加这些
+      - DB_HOST=db
+      - DB_USER=appdb
+      - DB_PASSWORD=your_db_password
+      - DB_NAME=api_key_rotator
+      - REDIS_HOST=redis
+    volumes:
+      - ./data:/app/data
+    depends_on:
+      - db
+      - redis
+
+  db:
+    image: mysql:8.0
+    environment:
+      - MYSQL_ROOT_PASSWORD=your_root_password
+      - MYSQL_DATABASE=api_key_rotator
+      - MYSQL_USER=appdb
+      - MYSQL_PASSWORD=your_db_password
+    volumes:
+      - mysql_data:/var/lib/mysql
+
+  redis:
+    image: redis:7-alpine
+    command: redis-server --requirepass your_redis_password
+    volumes:
+      - redis_data:/data
+
+volumes:
+  mysql_data:
+  redis_data:
+```
+
+## ❓ 常见问题
+
+### Q: 如何选择合适的部署模式？
+**A**:
+- **开发/测试**: 使用轻量级模式 (SQLite + 内存缓存)
+- **小型项目**: SQLite + Redis 或 MySQL + 内存缓存
+- **生产环境**: MySQL + Redis
+
+### Q: 如何查看当前使用的数据库和缓存类型？
+**A**: 启动应用时会显示日志信息：
+```
+Database Type: sqlite
+Cache Type: memory
+```
+
+### Q: 如何从轻量级模式升级到企业级模式？
+**A**: 只需添加相应的环境变量即可，系统会自动检测并切换：
+```bash
+# 添加MySQL配置
+DB_HOST=mysql-server
+DB_USER=appdb
+DB_PASSWORD=your_password
+
+# 添加Redis配置
+REDIS_HOST=redis-server
+```
+
+### Q: 数据迁移如何处理？
+**A**: 系统启动时会自动创建表结构。要从SQLite迁移到MySQL：
+
+1. **备份SQLite数据**:
+   ```bash
+   cp data/api_key_rotator.db backup_$(date +%Y%m%d).db
+   ```
+
+2. **添加MySQL环境变量**:
+   ```bash
+   -e DB_HOST="mysql-server" \
+   -e DB_USER="appdb" \
+   -e DB_PASSWORD="your_password" \
+   -e DB_NAME="api_key_rotator"
+   ```
+
+3. **重启应用程序** - 系统会在MySQL中自动创建新表
+
+数据导入需要您手动从SQLite导出并导入到MySQL，或使用迁移工具。
+
+### Q: 支持分布式部署吗？
+**A**: 是的，使用MySQL + Redis模式支持完全的分布式部署。

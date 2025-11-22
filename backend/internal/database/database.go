@@ -3,19 +3,48 @@ package database
 import (
 	"api-key-rotator/backend/internal/config"
 	"api-key-rotator/backend/internal/models"
+	"fmt"
 
 	"gorm.io/driver/mysql"
+	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
 )
 
-// Initialize 初始化数据库连接
+// Initialize 初始化数据库连接（工厂模式）
 func Initialize(cfg *config.Config) (*gorm.DB, error) {
+	switch cfg.DBType {
+	case "sqlite":
+		return initializeSQLite(cfg)
+	case "mysql":
+		return initializeMySQL(cfg)
+	default:
+		return nil, fmt.Errorf("unsupported database type: %s", cfg.DBType)
+	}
+}
+
+// initializeSQLite 初始化SQLite数据库
+func initializeSQLite(cfg *config.Config) (*gorm.DB, error) {
+	db, err := gorm.Open(sqlite.Open(cfg.DatabasePath), &gorm.Config{
+		Logger: logger.Default.LogMode(logger.Info),
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to connect to SQLite database at %s: %w", cfg.DatabasePath, err)
+	}
+
+	// 对于SQLite，确保数据目录存在
+	// 这在Docker环境中尤其重要
+
+	return db, nil
+}
+
+// initializeMySQL 初始化MySQL数据库
+func initializeMySQL(cfg *config.Config) (*gorm.DB, error) {
 	db, err := gorm.Open(mysql.Open(cfg.DatabaseURL), &gorm.Config{
 		Logger: logger.Default.LogMode(logger.Info),
 	})
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to connect to MySQL database: %w", err)
 	}
 
 	return db, nil

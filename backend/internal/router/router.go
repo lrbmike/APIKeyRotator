@@ -2,18 +2,18 @@ package router
 
 import (
 	"fmt"
-	
+
+	"api-key-rotator/backend/internal/cache"
 	"api-key-rotator/backend/internal/config"
 	"api-key-rotator/backend/internal/handlers"
 	"api-key-rotator/backend/internal/middleware"
 
 	"github.com/gin-gonic/gin"
-	"github.com/go-redis/redis/v8"
 	"gorm.io/gorm"
 )
 
 // Setup 设置路由
-func Setup(cfg *config.Config, db *gorm.DB, redisClient *redis.Client) *gin.Engine {
+func Setup(cfg *config.Config, db *gorm.DB, cacheClient cache.CacheInterface) *gin.Engine {
 	// 设置Gin模式为调试模式以便看到更多日志
 	gin.SetMode(gin.DebugMode)
 
@@ -50,8 +50,8 @@ func Setup(cfg *config.Config, db *gorm.DB, redisClient *redis.Client) *gin.Engi
 
 	// 创建处理器实例
 	managementHandler := handlers.NewManagementHandler(cfg, db)
-	proxyHandler := handlers.NewProxyHandler(cfg, db, redisClient)
-	llmProxyHandler := handlers.NewLLMProxyHandler(cfg, db, redisClient)
+	proxyHandler := handlers.NewProxyHandler(cfg, db, cacheClient)
+	llmProxyHandler := handlers.NewLLMProxyHandler(cfg, db, cacheClient)
 
 	// 根路径
 	r.GET("/", func(c *gin.Context) {
