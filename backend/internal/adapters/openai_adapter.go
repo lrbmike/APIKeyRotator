@@ -129,7 +129,13 @@ func (a *OpenAIAdapter) ProcessRequest() (*services.TargetRequest, error) {
 		actionPath = actionPath[3:] // 从action_path中移除 'v1/'
 	}
 
-	finalURL := fmt.Sprintf("%s/%s", baseURL, actionPath)
+	// 构建最终URL，避免末尾斜杠问题
+	var finalURL string
+	if actionPath == "" || actionPath == "/" {
+		finalURL = baseURL
+	} else {
+		finalURL = fmt.Sprintf("%s/%s", baseURL, actionPath)
+	}
 
 	// 处理查询参数
 	params := make(map[string]string)

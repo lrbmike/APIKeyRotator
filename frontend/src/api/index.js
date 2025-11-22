@@ -85,6 +85,11 @@ export const deleteApiKey = (keyId) => {
   return apiClient.delete(`/admin/keys/${keyId}`);
 }
 
+// 批量导入Keys
+export const batchImportApiKeys = (configId, data) => {
+  return apiClient.post(`/admin/proxy-configs/${configId}/keys/batch`, data);
+}
+
 // 获取应用公共配置
 export const getAppConfig = () => {
   return apiClient.get('/admin/app-config');

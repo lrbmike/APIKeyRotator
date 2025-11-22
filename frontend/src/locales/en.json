@@ -92,6 +92,12 @@
         "newKey": "New API Key",
         "placeholder": "Enter the full API Key",
         "add": "Add",
+        "batchImport": "Batch Import",
+        "batchImportTitle": "Batch Import API Keys",
+        "batchImportLabel": "Key List",
+        "batchImportPlaceholder": "Enter API keys, one per line:\n\nsk-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\nsk-yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy\nsk-zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz",
+        "batchImportTip": "Enter one API key per line, the system will automatically filter empty lines and duplicate keys",
+        "batchImportConfirm": "Start Import",
         "deleteConfirm": "Are you sure you want to delete this key?",
         "delete": "Delete",
         "table": {
@@ -103,8 +109,14 @@
         "messages": {
             "loadFailed": "Failed to load key list",
             "keyRequired": "Please enter an API Key",
+            "keysRequired": "Please enter API keys to import",
+            "noValidKeys": "No valid API keys found",
             "addSuccess": "Added successfully!",
             "addFailed": "Failed to add",
+            "batchImportSuccess": "Successfully imported {count} keys!",
+            "batchImportFailed": "Import failed, {count} keys could not be imported",
+            "batchImportPartial": "Import completed: {success} successful, {failed} failed",
+            "batchImportError": "An error occurred during batch import",
             "statusUpdateSuccess": "Status updated successfully!",
             "statusUpdateFailed": "Failed to update status",
             "deleteSuccess": "Deleted successfully!",
@@ -113,5 +125,9 @@
     },
     "langSwitcher": {
         "label": "Language"
+    },
+    "common": {
+        "cancel": "Cancel",
+        "confirm": "Confirm"
     }
 }

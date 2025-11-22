@@ -86,6 +86,7 @@ func Setup(cfg *config.Config, db *gorm.DB, cacheClient *cache.Client) *gin.Engi
 			// API密钥管理
 			adminAPI.GET("/proxy-configs/:id/keys", managementHandler.GetKeysForConfig)
 			adminAPI.POST("/proxy-configs/:id/keys", managementHandler.CreateAPIKeyForConfig)
+			adminAPI.POST("/proxy-configs/:id/keys/batch", managementHandler.BatchCreateAPIKeys)
 			adminAPI.PATCH("/keys/:keyID", managementHandler.UpdateAPIKeyStatus)
 			adminAPI.DELETE("/keys/:keyID", managementHandler.DeleteAPIKey)
 		}

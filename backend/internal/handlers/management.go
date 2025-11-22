@@ -304,6 +304,54 @@ func (h *ManagementHandler) UpdateAPIKeyStatus(c *gin.Context) {
 	c.JSON(http.StatusOK, apiKey)
 }
 
+// BatchCreateAPIKeys 批量创建API密钥
+func (h *ManagementHandler) BatchCreateAPIKeys(c *gin.Context) {
+	id, err := h.parseID(c)
+	if err != nil {
+		return
+	}
+
+	var req dto.BatchAPIKeyCreate
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	var config models.ProxyConfig
+	if err := h.db.First(&config, id).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"detail": "ProxyConfig not found"})
+		return
+	}
+
+	response := dto.BatchAPIKeyImportResponse{
+		SuccessCount: 0,
+		FailedCount:  0,
+		FailedKeys:   []string{},
+	}
+
+	for _, key := range req.Keys {
+		if key == "" {
+			continue
+		}
+
+		apiKey := &models.APIKey{
+			KeyValue:      key,
+			IsActive:      true, // 默认启用
+			ProxyConfigID: id,
+		}
+
+		if err := h.db.Create(apiKey).Error; err != nil {
+			logger.Errorf("Failed to create API key '%s': %v", maskKey(key), err)
+			response.FailedCount++
+			response.FailedKeys = append(response.FailedKeys, key)
+		} else {
+			response.SuccessCount++
+		}
+	}
+
+	c.JSON(http.StatusOK, response)
+}
+
 // DeleteAPIKey 删除API密钥
 func (h *ManagementHandler) DeleteAPIKey(c *gin.Context) {
 	keyID, err := h_parseKeyID(c)
@@ -344,4 +392,12 @@ func h_parseKeyID(c *gin.Context) (int32, error) {
 		return 0, err
 	}
 	return int32(id64), nil
+}
+
+// maskKey 脱敏密钥，用于日志记录
+func maskKey(key string) string {
+	if len(key) < 10 {
+		return "*****"
+	}
+	return key[:6] + "*****" + key[len(key)-4:]
 }

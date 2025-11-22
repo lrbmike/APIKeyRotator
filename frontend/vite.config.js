@@ -29,16 +29,13 @@ export default defineConfig(({ mode }) => {
         '/api': {
           // 现在 env.VITE_API_TARGET_URL 可以被正确读取了
           target: env.VITE_API_TARGET_URL || 'http://localhost:8000',
-          
+
           // changeOrigin: true 对于代理是必需的，它会修改请求头中的 Host，
           // 使其与目标服务器匹配，很多后端服务都需要这个配置。
           changeOrigin: true,
 
-          // 如果您的后端 API 路由本身就包含了 /api (例如 /api/admin/login)，
-          // 那么就不需要 rewrite。
-          // 如果后端路由是 /admin/login，而前端请求的是 /api/admin/login，
-          // 那么就需要取消下面的注释来移除 /api 前缀。
-          rewrite: (path) => path.replace(/^\/api/, ''),
+          // 后端API路由本身就包含了 /api 前缀，所以不需要重写
+          // rewrite: (path) => path.replace(/^\/api/, ''),
         }
       }
     }

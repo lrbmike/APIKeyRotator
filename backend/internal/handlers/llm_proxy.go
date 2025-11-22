@@ -48,6 +48,11 @@ func (h *LLMProxyHandler) HandleLLMProxy(c *gin.Context) {
 		return
 	}
 
+	// 如果action为空，尝试智能推断action
+	if action == "" {
+		action = h.inferActionFromRequest(c)
+	}
+
 	targetRequest, err := h.prepareLLMRequest(c, slug, action)
 	if err != nil {
 		logger.Warningf("Bad Request for LLM slug '%s': %v", slug, err)
@@ -180,4 +185,41 @@ func (h *LLMProxyHandler) forwardLLMRequest(c *gin.Context, target *services.Tar
 	}
 
 	return nil
+}
+
+// inferActionFromRequest 从请求中智能推断action路径
+func (h *LLMProxyHandler) inferActionFromRequest(c *gin.Context) string {
+	method := c.Request.Method
+	contentType := c.GetHeader("Content-Type")
+
+	// 对于POST请求，检查Content-Type和请求体来推断
+	if method == "POST" {
+		// 如果是JSON请求，可能是chat completions或embeddings
+		if strings.Contains(contentType, "application/json") {
+			// 读取请求体前缀来判断具体请求类型
+			bodyBytes, _ := io.ReadAll(c.Request.Body)
+
+			// 恢复请求体供后续使用
+			c.Request.Body = io.NopCloser(bytes.NewReader(bodyBytes))
+
+			// 简单的启发式判断
+			bodyStr := strings.ToLower(string(bodyBytes))
+			if strings.Contains(bodyStr, "\"chat\"") || strings.Contains(bodyStr, "\"model\"") && strings.Contains(bodyStr, "\"messages\"") {
+				return "chat/completions"
+			}
+			if strings.Contains(bodyStr, "\"embedding\"") || strings.Contains(bodyStr, "\"input\"") && strings.Contains(bodyStr, "\"model\"") {
+				return "embeddings"
+			}
+			// 默认假设是chat completions
+			return "chat/completions"
+		}
+	}
+
+	// 对于GET请求，可能是models
+	if method == "GET" {
+		return "models"
+	}
+
+	// 默认情况，返回空字符串让适配器处理
+	return ""
 }

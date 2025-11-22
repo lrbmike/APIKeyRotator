@@ -8,8 +8,34 @@
       </el-form-item>
       <el-form-item>
         <el-button type="primary" @click="handleAddNewKey" :loading="addLoading">{{ t('keyManager.add') }}</el-button>
+        <el-button type="success" @click="showBatchImport = true">{{ t('keyManager.batchImport') }}</el-button>
       </el-form-item>
     </el-form>
+
+    <!-- 批量导入对话框 -->
+    <el-dialog v-model="showBatchImport" :title="t('keyManager.batchImportTitle')" width="50%" append-to-body>
+      <el-form :model="batchImportForm" label-width="100px">
+        <el-form-item :label="t('keyManager.batchImportLabel')">
+          <el-input
+            v-model="batchImportForm.keys"
+            type="textarea"
+            :rows="10"
+            :placeholder="t('keyManager.batchImportPlaceholder')"
+          />
+          <div class="batch-import-tip">
+            <el-text type="info" size="small">{{ t('keyManager.batchImportTip') }}</el-text>
+          </div>
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <span class="dialog-footer">
+          <el-button @click="showBatchImport = false">{{ t('common.cancel') }}</el-button>
+          <el-button type="primary" @click="handleBatchImport" :loading="batchImportLoading">
+            {{ t('keyManager.batchImportConfirm') }}
+          </el-button>
+        </span>
+      </template>
+    </el-dialog>
 
     <!-- Key列表 -->
     <el-table :data="keys" v-loading="loading">
@@ -43,7 +69,7 @@
 
 <script setup>
 import { ref, reactive, watch } from 'vue'
-import { getKeysForConfig, addApiKeyToConfig, updateApiKeyStatus, deleteApiKey } from '../api'
+import { getKeysForConfig, addApiKeyToConfig, updateApiKeyStatus, deleteApiKey, batchImportApiKeys } from '../api'
 import { ElMessage } from 'element-plus'
 import { useI18n } from 'vue-i18n'
 
@@ -61,10 +87,16 @@ const visible = ref(props.modelValue)
 const keys = ref([])
 const loading = ref(false)
 const addLoading = ref(false)
+const batchImportLoading = ref(false)
+const showBatchImport = ref(false)
 
 const newKeyForm = reactive({
   key_value: '',
   is_active: true
+})
+
+const batchImportForm = reactive({
+  keys: ''
 })
 
 // 脱敏函数
@@ -142,6 +174,52 @@ watch(() => props.configId, (newId) => {
   }
 }, { immediate: true })
 
+const handleBatchImport = async () => {
+  if (!batchImportForm.keys.trim()) {
+    ElMessage.warning(t('keyManager.messages.keysRequired'));
+    return;
+  }
+
+  // 解析输入的keys，一行一个
+  const keyList = batchImportForm.keys
+    .split('\n')
+    .map(key => key.trim())
+    .filter(key => key.length > 0);
+
+  if (keyList.length === 0) {
+    ElMessage.warning(t('keyManager.messages.noValidKeys'));
+    return;
+  }
+
+  batchImportLoading.value = true;
+  try {
+    const response = await batchImportApiKeys(props.configId, { keys: keyList });
+    const { success_count, failed_count, failed_keys } = response.data;
+
+    if (failed_count === 0) {
+      ElMessage.success(t('keyManager.messages.batchImportSuccess', { count: success_count }));
+    } else if (success_count === 0) {
+      ElMessage.error(t('keyManager.messages.batchImportFailed', { count: failed_count }));
+    } else {
+      ElMessage.warning(t('keyManager.messages.batchImportPartial', {
+        success: success_count,
+        failed: failed_count
+      }));
+    }
+
+    // 清空表单并关闭对话框
+    batchImportForm.keys = '';
+    showBatchImport.value = false;
+
+    // 重新加载key列表
+    await fetchKeys();
+  } catch (error) {
+    ElMessage.error(t('keyManager.messages.batchImportError'));
+  } finally {
+    batchImportLoading.value = false;
+  }
+}
+
 const handleClose = () => {
   emit('update:modelValue', false)
 }
@@ -150,5 +228,15 @@ const handleClose = () => {
 <style scoped>
 .add-key-form {
   margin-bottom: 20px;
+}
+
+.batch-import-tip {
+  margin-top: 8px;
+}
+
+.dialog-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
 }
 </style>

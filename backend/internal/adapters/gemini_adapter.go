@@ -86,7 +86,15 @@ func (a *GeminiAdapter) ProcessRequest() (*services.TargetRequest, error) {
 	if a.proxyConfig.TargetBaseURL != nil {
 		baseURL = strings.TrimSuffix(*a.proxyConfig.TargetBaseURL, "/")
 	}
-	finalURL := fmt.Sprintf("%s/%s", baseURL, a.action)
+
+	// 构建最终URL，避免末尾斜杠问题
+	actionPath := strings.TrimPrefix(a.action, "/")
+	var finalURL string
+	if actionPath == "" || actionPath == "/" {
+		finalURL = baseURL
+	} else {
+		finalURL = fmt.Sprintf("%s/%s", baseURL, actionPath)
+	}
 
 	// 处理查询参数
 	params := make(map[string]string)
