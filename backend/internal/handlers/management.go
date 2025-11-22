@@ -260,6 +260,16 @@ func (h *ManagementHandler) CreateAPIKeyForConfig(c *gin.Context) {
 		return
 	}
 
+	// 检查key是否已存在（单个导入时返回重复提示）
+	var existingKey models.APIKey
+	err = h.db.Where("key_value = ? AND proxy_config_id = ?", req.KeyValue, id).First(&existingKey).Error
+	if err == nil {
+		// key已存在，返回重复key错误提示
+		logger.Warningf("API key '%s' already exists for config %d", maskKey(req.KeyValue), id)
+		c.JSON(http.StatusConflict, gin.H{"error": "API key already exists for this configuration"})
+		return
+	}
+
 	apiKey := &models.APIKey{
 		KeyValue:      req.KeyValue,
 		IsActive:      req.IsActive,
@@ -326,11 +336,22 @@ func (h *ManagementHandler) BatchCreateAPIKeys(c *gin.Context) {
 	response := dto.BatchAPIKeyImportResponse{
 		SuccessCount: 0,
 		FailedCount:  0,
+		SkippedCount: 0,
 		FailedKeys:   []string{},
 	}
 
 	for _, key := range req.Keys {
 		if key == "" {
+			continue
+		}
+
+		// 检查key是否已存在（批量导入时静默处理重复key）
+		var existingKey models.APIKey
+		err := h.db.Where("key_value = ? AND proxy_config_id = ?", key, id).First(&existingKey).Error
+		if err == nil {
+			// key已存在，静默跳过（不返回错误提示）
+			logger.Infof("API key '%s' already exists for config %d, skipping", maskKey(key), id)
+			response.SkippedCount++
 			continue
 		}
 

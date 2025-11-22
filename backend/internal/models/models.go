@@ -31,7 +31,7 @@ type ProxyConfig struct {
 // APIKey API密钥模型
 type APIKey struct {
 	ID            int32        `json:"id" gorm:"primaryKey"`
-	KeyValue      string       `json:"key_value" gorm:"size:255;not null"`
+	KeyValue      string       `json:"key_value" gorm:"size:255;not null;uniqueIndex:idx_key_value_proxy_config"` // 添加唯一约束
 	IsActive      bool         `json:"is_active" gorm:"default:true"`
 	ProxyConfigID int32        `json:"proxy_config_id"`
 	ProxyConfig   *ProxyConfig `json:"-" gorm:"foreignKey:ProxyConfigID"`

@@ -56,9 +56,10 @@ type BatchAPIKeyCreate struct {
 
 // BatchAPIKeyImportResponse 批量导入API密钥响应
 type BatchAPIKeyImportResponse struct {
-	SuccessCount int      `json:"success_count"`
-	FailedCount  int      `json:"failed_count"`
-	FailedKeys   []string `json:"failed_keys,omitempty"`
+	SuccessCount     int      `json:"success_count"`
+	FailedCount      int      `json:"failed_count"`
+	SkippedCount     int      `json:"skipped_count"`     // 重复跳过的key数量
+	FailedKeys       []string `json:"failed_keys,omitempty"`
 }
 
 // ProxyConfigResponse 代理配置的统一响应
