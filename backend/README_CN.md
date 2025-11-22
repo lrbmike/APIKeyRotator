@@ -20,14 +20,12 @@ backend/
 ├── main.go                    # 应用入口点
 ├── go.mod                     # Go模块定义
 ├── go.sum                     # 依赖版本锁定
-├── Dockerfile.lightweight     # 轻量级Docker构建
-├── Dockerfile.enterprise      # 企业级Docker构建
 ├── README.md                  # 项目文档
 └── internal/                  # 内部包
     ├── config/                # 配置管理
     │   ├── config.go          # 配置加载
     │   └── factory.go         # 基础设施工厂
-    ├── infrastructure/        # 基础设施层 (NEW)
+    ├── infrastructure/        # 基础设施层
     │   ├── database/
     │   │   ├── interface.go   # 数据库仓库接口
     │   │   ├── sqlite/        # SQLite实现
@@ -36,7 +34,7 @@ backend/
     │       ├── interface.go   # 缓存接口
     │       ├── memory/        # 内存缓存实现
     │       └── redis/         # Redis实现
-    ├── adapters/              # LLM适配器 (需要接口更新)
+    ├── adapters/              # LLM适配器
     ├── handlers/              # HTTP处理器
     ├── services/              # 业务服务
     ├── models/                # 数据模型
@@ -112,19 +110,16 @@ backend/
 
 ## Docker部署
 
-本项目支持通过根目录的Makefile进行优化构建。
+本项目支持纯Docker构建。
 
 ### 构建镜像
 
 ```bash
-# 构建轻量级版本 (SQLite + 内存缓存)
-make build-lightweight
+# 轻量级版本 (SQLite + 内存缓存)
+docker build -t api-key-rotator .
 
-# 构建企业级版本 (MySQL + Redis)
-make build-enterprise
-
-# 构建所有版本
-make build-all
+# 企业级版本 (MySQL + Redis)
+docker build -f Dockerfile.enterprise -t api-key-rotator:enterprise .
 ```
 
 ### 使用Docker Compose
@@ -156,3 +151,111 @@ go test ./internal/handlers
 # 运行测试并显示覆盖率
 go test -cover ./...
 ```
+
+## 二次开发扩展
+
+### 接入PostgreSQL示例
+
+本项目采用**接口抽象架构**，可以轻松扩展支持新的数据库类型。以下是一个接入PostgreSQL的简明示例：
+
+#### 1. 创建PostgreSQL实现
+
+**目录结构：**
+```
+internal/infrastructure/database/
+├── interface.go          # 现有接口定义
+├── sqlite/               # SQLite实现
+├── mysql/                # MySQL实现
+└── postgres/             # PostgreSQL实现（新增）
+    ├── manager.go        # PostgreSQL管理器
+    └── repository.go     # PostgreSQL仓库实现
+```
+
+**核心代码示例：**
+
+**postgres/manager.go**
+```go
+package postgres
+
+import (
+    "api-key-rotator/backend/internal/infrastructure/database"
+)
+
+type Manager struct {
+    dsn string
+    repo database.Repository
+}
+
+func NewPostgresManager(dsn string) *Manager {
+    return &Manager{dsn: dsn}
+}
+
+func (m *Manager) Initialize() (database.Repository, error) {
+    repo, err := NewPostgresRepository(m.dsn)
+    if err != nil {
+        return nil, err
+    }
+    m.repo = repo
+    return repo, nil
+}
+```
+
+**postgres/repository.go**
+```go
+package postgres
+
+import (
+    "api-key-rotator/backend/internal/models"
+    "gorm.io/driver/postgres"
+    "gorm.io/gorm"
+)
+
+type Repository struct {
+    db *gorm.DB
+}
+
+func NewPostgresRepository(dsn string) (*Repository, error) {
+    db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
+    if err != nil {
+        return nil, err
+    }
+    return &Repository{db: db}, nil
+}
+
+// 实现database.Repository接口的所有方法
+func (r *Repository) GetDB() *gorm.DB { return r.db }
+func (r *Repository) CreateProxyConfig(config *models.ProxyConfig) error {
+    return r.db.Create(config).Error
+}
+// ... 其他方法类似SQLite实现
+```
+
+#### 2. 更新配置工厂
+
+在 `internal/config/factory.go` 中添加PostgreSQL支持：
+```go
+// 在CreateDatabaseManager函数中添加PostgreSQL选项
+if strings.Contains(os.Getenv("DATABASE_URL"), "postgres") {
+    return postgres.NewPostgresManager(dsn), nil
+}
+```
+
+#### 3. 添加依赖
+
+在 `go.mod` 中添加：
+```bash
+go get gorm.io/driver/postgres
+```
+
+#### 4. 环境变量配置
+
+```bash
+# PostgreSQL连接配置
+DATABASE_URL=postgres://user:password@localhost:5432/dbname?sslmode=disable
+```
+
+#### 5. 构建配置
+
+在Dockerfile中添加PostgreSQL构建支持，类似于现有的MySQL和SQLite构建。
+
+这样的扩展方式保持了现有架构的完整性，同时提供了灵活的数据库支持。

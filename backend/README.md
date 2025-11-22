@@ -20,14 +20,12 @@ backend/
 ├── main.go                    # Application entry point
 ├── go.mod                     # Go module definition
 ├── go.sum                     # Dependency version lock
-├── Dockerfile.lightweight     # Lightweight Docker build
-├── Dockerfile.enterprise      # Enterprise Docker build
 ├── README.md                  # Project documentation
 └── internal/                  # Internal packages
     ├── config/                # Configuration management
     │   ├── config.go          # Configuration loading
     │   └── factory.go         # Infrastructure factory
-    ├── infrastructure/        # Infrastructure layer (NEW)
+    ├── infrastructure/        # Infrastructure layer
     │   ├── database/
     │   │   ├── interface.go   # Database repository interface
     │   │   ├── sqlite/        # SQLite implementation
@@ -36,7 +34,7 @@ backend/
     │       ├── interface.go   # Cache interface
     │       ├── memory/        # Memory cache implementation
     │       └── redis/         # Redis implementation
-    ├── adapters/              # LLM adapters (needs interface update)
+    ├── adapters/              # LLM adapters
     ├── handlers/              # HTTP handlers
     ├── services/              # Business services
     ├── models/                # Data models
@@ -112,19 +110,16 @@ After starting the service, you can view the APIs as follows:
 
 ## Docker Deployment
 
-This project supports optimized builds via the Makefile in the root directory.
+This project supports pure Docker builds.
 
 ### Building Images
 
 ```bash
-# Build lightweight version (SQLite + Memory Cache)
-make build-lightweight
+# Lightweight version (SQLite + Memory Cache)
+docker build -t api-key-rotator .
 
-# Build enterprise version (MySQL + Redis)
-make build-enterprise
-
-# Build both versions
-make build-all
+# Enterprise version (MySQL + Redis)
+docker build -f Dockerfile.enterprise -t api-key-rotator:enterprise .
 ```
 
 ### Using Docker Compose
@@ -155,3 +150,112 @@ go test ./internal/handlers
 
 # Run tests and show coverage
 go test -cover ./...
+```
+
+## Secondary Development Extension
+
+### PostgreSQL Integration Example
+
+This project uses **Interface Abstraction Architecture** to easily extend support for new database types. Here's a concise example for integrating PostgreSQL:
+
+#### 1. Create PostgreSQL Implementation
+
+**Directory Structure:**
+```
+internal/infrastructure/database/
+├── interface.go          # Existing interface definitions
+├── sqlite/               # SQLite implementation
+├── mysql/                # MySQL implementation
+└── postgres/             # PostgreSQL implementation (new)
+    ├── manager.go        # PostgreSQL manager
+    └── repository.go     # PostgreSQL repository implementation
+```
+
+**Core Code Examples:**
+
+**postgres/manager.go**
+```go
+package postgres
+
+import (
+    "api-key-rotator/backend/internal/infrastructure/database"
+)
+
+type Manager struct {
+    dsn string
+    repo database.Repository
+}
+
+func NewPostgresManager(dsn string) *Manager {
+    return &Manager{dsn: dsn}
+}
+
+func (m *Manager) Initialize() (database.Repository, error) {
+    repo, err := NewPostgresRepository(m.dsn)
+    if err != nil {
+        return nil, err
+    }
+    m.repo = repo
+    return repo, nil
+}
+```
+
+**postgres/repository.go**
+```go
+package postgres
+
+import (
+    "api-key-rotator/backend/internal/models"
+    "gorm.io/driver/postgres"
+    "gorm.io/gorm"
+)
+
+type Repository struct {
+    db *gorm.DB
+}
+
+func NewPostgresRepository(dsn string) (*Repository, error) {
+    db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
+    if err != nil {
+        return nil, err
+    }
+    return &Repository{db: db}, nil
+}
+
+// Implement all database.Repository interface methods
+func (r *Repository) GetDB() *gorm.DB { return r.db }
+func (r *Repository) CreateProxyConfig(config *models.ProxyConfig) error {
+    return r.db.Create(config).Error
+}
+// ... other methods similar to SQLite implementation
+```
+
+#### 2. Update Configuration Factory
+
+Add PostgreSQL support in `internal/config/factory.go`:
+```go
+// Add PostgreSQL option in CreateDatabaseManager function
+if strings.Contains(os.Getenv("DATABASE_URL"), "postgres") {
+    return postgres.NewPostgresManager(dsn), nil
+}
+```
+
+#### 3. Add Dependencies
+
+Add to `go.mod`:
+```bash
+go get gorm.io/driver/postgres
+```
+
+#### 4. Environment Variables Configuration
+
+```bash
+# PostgreSQL connection configuration
+DATABASE_URL=postgres://user:password@localhost:5432/dbname?sslmode=disable
+```
+
+#### 5. Build Configuration
+
+Add PostgreSQL build support in Dockerfile, similar to existing MySQL and SQLite builds.
+
+This extension approach maintains the integrity of the existing architecture while providing flexible database support.
