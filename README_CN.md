@@ -95,10 +95,9 @@ RESET_DB_TABLES=false
 
 ```
 api-key-rotator/
-├── Makefile                          # 构建编排
 ├── docker-compose.yml                # 轻量级部署
 ├── docker-compose.prod.yml           # 企业级部署
-├── Dockerfile.lightweight            # 轻量级构建
+├── Dockerfile                        # 默认构建（轻量级）
 ├── Dockerfile.enterprise             # 企业级构建
 ├── README.md                         # 项目文档
 └── backend/                          # Go后端服务
@@ -150,30 +149,15 @@ api-key-rotator/
 
 #### 选项 1：使用默认构建（轻量级）
 ```bash
-# 构建轻量级版本（默认）
+# 构建轻量级版本（默认，SQLite + 内存缓存）
 docker build -t api-key-rotator .
 
 # 使用自定义标签构建
 docker build -t my-api-key-rotator:latest .
 ```
 
-#### 选项 2：使用 Makefile（推荐）
+#### 选项 2：企业级构建
 ```bash
-# 构建轻量级版本
-make build-lightweight
-
-# 构建企业级版本
-make build-enterprise
-
-# 构建所有版本
-make build-all
-```
-
-#### 选项 3：直接指定 Dockerfile
-```bash
-# 轻量级构建（SQLite + 内存缓存）
-docker build -f Dockerfile.lightweight -t api-key-rotator:lightweight .
-
 # 企业级构建（MySQL + Redis）
 docker build -f Dockerfile.enterprise -t api-key-rotator:enterprise .
 ```

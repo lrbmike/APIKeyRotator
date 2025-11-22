@@ -95,10 +95,9 @@ RESET_DB_TABLES=false
 
 ```
 api-key-rotator/
-├── Makefile                          # Build orchestration
 ├── docker-compose.yml                # Lightweight deployment
 ├── docker-compose.prod.yml           # Enterprise deployment
-├── Dockerfile.lightweight            # Lightweight build
+├── Dockerfile                        # Default build (lightweight)
 ├── Dockerfile.enterprise             # Enterprise build
 ├── README.md                         # Project documentation
 └── backend/                          # Go backend service
@@ -150,30 +149,15 @@ After starting the service, you can access the following APIs:
 
 #### Option 1: Using Default Build (Lightweight)
 ```bash
-# Build lightweight version (default)
+# Build lightweight version (default, SQLite + Memory Cache)
 docker build -t api-key-rotator .
 
 # Build with custom tag
 docker build -t my-api-key-rotator:latest .
 ```
 
-#### Option 2: Using Makefile (Recommended)
+#### Option 2: Enterprise Build
 ```bash
-# Build lightweight version
-make build-lightweight
-
-# Build enterprise version
-make build-enterprise
-
-# Build both versions
-make build-all
-```
-
-#### Option 3: Specify Dockerfile Directly
-```bash
-# Lightweight build (SQLite + Memory Cache)
-docker build -f Dockerfile.lightweight -t api-key-rotator:lightweight .
-
 # Enterprise build (MySQL + Redis)
 docker build -f Dockerfile.enterprise -t api-key-rotator:enterprise .
 ```
