@@ -1,12 +1,12 @@
 version: '3.8'
 
 services:
-  # 主应用服务 - 生产优化配置
+  # 主应用服务 - 企业级版本 (MySQL + Redis)
   app:
     build:
       context: .
-      dockerfile: Dockerfile
-    container_name: api-key-rotator-prod
+      dockerfile: Dockerfile.enterprise  # 使用企业级构建
+    container_name: api-key-rotator-enterprise
     ports:
       - "${BACKEND_PORT:-8000}:8000"
     environment:
@@ -15,7 +15,7 @@ services:
       - JWT_SECRET=${JWT_SECRET}
       - GLOBAL_PROXY_KEYS=${GLOBAL_PROXY_KEYS}
 
-      # 生产环境服务配置
+      # 企业级服务配置
       - BACKEND_PORT=${BACKEND_PORT:-8000}
       - PROXY_PUBLIC_BASE_URL=${PROXY_PUBLIC_BASE_URL}
       - LOG_LEVEL=${LOG_LEVEL:-warn}
@@ -38,7 +38,7 @@ services:
       - REDIS_DB=${REDIS_DB:-0}
     volumes:
       - ./data:/app/data
-      - app_logs:/app/logs  # 生产环境日志持久化
+      - app_logs:/app/logs  # 企业级环境日志持久化
     restart: unless-stopped
     depends_on:
       db:
@@ -62,16 +62,16 @@ services:
           cpus: '0.5'
           memory: 256M
 
-  # MySQL 数据库服务 - 生产优化
+  # MySQL 数据库服务 - 企业级配置
   db:
     image: mysql:8.0
-    container_name: api-key-rotator-db-prod
+    container_name: api-key-rotator-db-enterprise
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
       MYSQL_DATABASE: ${DB_NAME}
       MYSQL_USER: ${DB_USER}
       MYSQL_PASSWORD: ${DB_PASSWORD}
-    # 生产环境不暴露数据库端口到主机
+    # 企业级环境不暴露数据库端口到主机
     volumes:
       - mysql_data:/var/lib/mysql
       - ./init-scripts:/docker-entrypoint-initdb.d 2>/dev/null || true
@@ -101,10 +101,10 @@ services:
       --long-query-time=2
       --general-log=0
 
-  # Redis 缓存服务 - 生产优化
+  # Redis 缓存服务 - 企业级配置
   redis:
     image: redis:7-alpine
-    container_name: api-key-rotator-redis-prod
+    container_name: api-key-rotator-redis-enterprise
     command: >
       sh -c "
         if [ -n '${REDIS_PASSWORD}' ]; then
@@ -123,7 +123,7 @@ services:
             --maxmemory-policy allkeys-lru
         fi
       "
-    # 生产环境不暴露Redis端口到主机
+    # 企业级环境不暴露Redis端口到主机
     volumes:
       - redis_data:/data
       - ./redis-prod.conf:/usr/local/etc/redis/redis.conf 2>/dev/null || true
@@ -145,7 +145,7 @@ services:
           cpus: '0.1'
           memory: 64M
 
-  # 可选：Nginx 反向代理 (用于生产环境)
+  # 可选：Nginx 反向代理 (用于企业级环境)
   nginx:
     image: nginx:alpine
     container_name: api-key-rotator-nginx

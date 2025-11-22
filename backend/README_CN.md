@@ -127,11 +127,11 @@ docker build -f Dockerfile.enterprise -t api-key-rotator:enterprise .
 根据需求运行相应的compose文件：
 
 ```bash
-# 轻量级部署
+# 轻量级版本部署
 docker-compose -f docker-compose.yml up -d
 
-# 企业级部署
-docker-compose -f docker-compose.prod.yml up -d
+# 企业级版本部署
+docker-compose -f docker-compose.enterprise.yml up -d
 ```
 
 ### Docker镜像标签

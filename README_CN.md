@@ -96,7 +96,7 @@ RESET_DB_TABLES=false
 ```
 api-key-rotator/
 ├── docker-compose.yml                # 轻量级部署
-├── docker-compose.prod.yml           # 企业级部署
+├── docker-compose.enterprise.yml     # 企业级部署
 ├── Dockerfile                        # 默认构建（轻量级）
 ├── Dockerfile.enterprise             # 企业级构建
 ├── README.md                         # 项目文档
@@ -164,14 +164,14 @@ docker build -f Dockerfile.enterprise -t api-key-rotator:enterprise .
 
 ### 🐳 Docker部署
 
-#### 轻量级部署
+#### 轻量级版本部署
 ```bash
 docker-compose up -d
 ```
 
-#### 企业级部署
+#### 企业级版本部署
 ```bash
-docker-compose -f docker-compose.prod.yml up -d
+docker-compose -f docker-compose.enterprise.yml up -d
 ```
 
 ### 🧪 测试

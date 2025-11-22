@@ -1,11 +1,11 @@
 version: '3.8'
 
 services:
-  # 主应用服务 - 使用统一镜像
+  # 主应用服务 - 轻量级版本 (SQLite + 内存缓存)
   app:
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile  # 使用默认轻量级构建
     container_name: api-key-rotator
     ports:
       - "${BACKEND_PORT:-8000}:8000"
@@ -15,40 +15,19 @@ services:
       - JWT_SECRET=${JWT_SECRET}
       - GLOBAL_PROXY_KEYS=${GLOBAL_PROXY_KEYS}
 
-      # 可选的服务配置
+      # 轻量级服务配置
       - BACKEND_PORT=${BACKEND_PORT:-8000}
       - PROXY_PUBLIC_BASE_URL=${PROXY_PUBLIC_BASE_URL:-http://localhost:8000}
       - LOG_LEVEL=${LOG_LEVEL:-info}
       - RESET_DB_TABLES=${RESET_DB_TABLES:-false}
 
-      # 数据库配置 (可选 - 不设置则使用SQLite)
-      - DB_HOST=${DB_HOST:-}
-      - DB_USER=${DB_USER:-}
-      - DB_PASSWORD=${DB_PASSWORD:-}
-      - DB_NAME=${DB_NAME:-}
-      - DB_PORT=${DB_PORT:-3306}
-      - DATABASE_URL=${DATABASE_URL:-}
+      # SQLite配置 (轻量级默认)
       - DATABASE_PATH=${DATABASE_PATH:-/app/data/api_key_rotator.db}
-
-      # Redis配置 (可选 - 不设置则使用内存缓存)
-      - REDIS_HOST=${REDIS_HOST:-}
-      - REDIS_PORT=${REDIS_PORT:-6379}
-      - REDIS_PASSWORD=${REDIS_PASSWORD:-}
-      - REDIS_URL=${REDIS_URL:-}
-      - REDIS_DB=${REDIS_DB:-0}
-
-      # Docker相关配置
-      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD:-}
     volumes:
       - ./data:/app/data
       # 开发环境可选：挂载前端源代码用于热重载
       - ./frontend:/app/frontend-source 2>/dev/null || true
     restart: unless-stopped
-    depends_on:
-      db:
-        condition: service_healthy
-      redis:
-        condition: service_started
     networks:
       - api-key-rotator-network
     healthcheck:
@@ -57,67 +36,6 @@ services:
       timeout: 10s
       retries: 3
       start_period: 40s
-
-  # MySQL 数据库服务 (可选 - 仅在配置了DB_HOST时启动)
-  db:
-    image: mysql:8.0
-    container_name: api-key-rotator-db
-    environment:
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-default_root_password}
-      MYSQL_DATABASE: ${DB_NAME:-api_key_rotator}
-      MYSQL_USER: ${DB_USER:-appdb}
-      MYSQL_PASSWORD: ${DB_PASSWORD:-default_password}
-    ports:
-      - "${DB_EXPOSE_PORT:-3306}:3306"  # 开发环境暴露端口便于调试
-    volumes:
-      - mysql_data:/var/lib/mysql
-      - ./init-scripts:/docker-entrypoint-initdb.d 2>/dev/null || true
-    healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "${DB_USER:-appdb}", "-p${DB_PASSWORD:-default_password}"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 30s
-    restart: unless-stopped
-    networks:
-      - api-key-rotator-network
-    profiles:
-      - mysql  # 使用profile控制是否启动
-
-  # Redis 缓存服务 (可选 - 仅在配置了REDIS_HOST时启动)
-  redis:
-    image: redis:7-alpine
-    container_name: api-key-rotator-redis
-    command: >
-      sh -c "
-        if [ -n '${REDIS_PASSWORD}' ]; then
-          redis-server --requirepass ${REDIS_PASSWORD} --port ${REDIS_PORT:-6379}
-        else
-          redis-server --port ${REDIS_PORT:-6379}
-        fi
-      "
-    ports:
-      - "${REDIS_EXPOSE_PORT:-6379}:${REDIS_PORT:-6379}"  # 开发环境暴露端口便于调试
-    volumes:
-      - redis_data:/data
-      - ./redis.conf:/usr/local/etc/redis/redis.conf 2>/dev/null || true
-    healthcheck:
-      test: ["CMD", "redis-cli", "-h", "localhost", "-p", "${REDIS_PORT:-6379}", "ping"]
-      interval: 10s
-      timeout: 5s
-      retries: 3
-      start_period: 10s
-    restart: unless-stopped
-    networks:
-      - api-key-rotator-network
-    profiles:
-      - redis  # 使用profile控制是否启动
-
-volumes:
-  mysql_data:
-    driver: local
-  redis_data:
-    driver: local
 
 networks:
   api-key-rotator-network:

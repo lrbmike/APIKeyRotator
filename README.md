@@ -96,7 +96,7 @@ RESET_DB_TABLES=false
 ```
 api-key-rotator/
 ├── docker-compose.yml                # Lightweight deployment
-├── docker-compose.prod.yml           # Enterprise deployment
+├── docker-compose.enterprise.yml     # Enterprise deployment
 ├── Dockerfile                        # Default build (lightweight)
 ├── Dockerfile.enterprise             # Enterprise build
 ├── README.md                         # Project documentation
@@ -164,14 +164,14 @@ docker build -f Dockerfile.enterprise -t api-key-rotator:enterprise .
 
 ### 🐳 Docker Deployment
 
-#### Lightweight Deployment
+#### Lightweight Version Deployment
 ```bash
 docker-compose up -d
 ```
 
-#### Enterprise Deployment
+#### Enterprise Version Deployment
 ```bash
-docker-compose -f docker-compose.prod.yml up -d
+docker-compose -f docker-compose.enterprise.yml up -d
 ```
 
 ### 🧪 Testing

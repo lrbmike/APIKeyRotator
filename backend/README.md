@@ -127,11 +127,11 @@ docker build -f Dockerfile.enterprise -t api-key-rotator:enterprise .
 Run the appropriate compose file based on your needs:
 
 ```bash
-# Lightweight deployment
+# Lightweight version deployment
 docker-compose -f docker-compose.yml up -d
 
-# Enterprise deployment
-docker-compose -f docker-compose.prod.yml up -d
+# Enterprise version deployment
+docker-compose -f docker-compose.enterprise.yml up -d
 ```
 
 ### Docker Image Tags
