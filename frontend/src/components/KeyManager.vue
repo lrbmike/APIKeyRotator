@@ -9,6 +9,9 @@
       <el-form-item>
         <el-button type="primary" @click="handleAddNewKey" :loading="addLoading">{{ t('keyManager.add') }}</el-button>
         <el-button type="success" @click="showBatchImport = true">{{ t('keyManager.batchImport') }}</el-button>
+        <el-button type="info" @click="handleExportKeys" :disabled="keys.length === 0">
+          {{ t('keyManager.export') }}
+        </el-button>
         <el-button type="danger" @click="handleClearAllKeys" :loading="clearAllLoading" :disabled="keys.length === 0">
           {{ t('keyManager.clearAll') }}
         </el-button>
@@ -265,6 +268,49 @@ const confirmClearAllKeys = async () => {
   } finally {
     clearAllLoading.value = false;
   }
+};
+
+// 处理导出Keys
+const handleExportKeys = () => {
+  if (keys.value.length === 0) {
+    ElMessage.warning(t('keyManager.messages.noKeysToExport'));
+    return;
+  }
+
+  // 过滤出激活状态的keys，并按行拼接
+  const activeKeys = keys.value
+    .filter(key => key.is_active)
+    .map(key => key.key_value)
+    .join('\n');
+
+  if (!activeKeys.trim()) {
+    ElMessage.warning(t('keyManager.messages.noActiveKeysToExport'));
+    return;
+  }
+
+  // 创建Blob对象
+  const blob = new Blob([activeKeys], { type: 'text/plain;charset=utf-8' });
+
+  // 创建下载链接
+  const link = document.createElement('a');
+  const url = URL.createObjectURL(blob);
+  link.setAttribute('href', url);
+
+  // 设置文件名，包含配置名和当前时间戳
+  const timestamp = new Date().toISOString().slice(0, 19).replace(/[:-]/g, '');
+  const filename = `${props.configName}_keys_${timestamp}.txt`;
+  link.setAttribute('download', filename);
+
+  // 触发下载
+  link.style.visibility = 'hidden';
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+
+  // 清理URL对象
+  URL.revokeObjectURL(url);
+
+  ElMessage.success(t('keyManager.messages.exportSuccess', { count: keys.value.filter(key => key.is_active).length }));
 };
 
 const handleClose = () => {

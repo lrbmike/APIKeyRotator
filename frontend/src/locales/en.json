@@ -98,6 +98,7 @@
         "batchImportPlaceholder": "Enter API keys, one per line:\n\nsk-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\nsk-yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy\nsk-zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz",
         "batchImportTip": "Enter one API key per line, the system will automatically filter empty lines and duplicate keys",
         "batchImportConfirm": "Start Import",
+        "export": "Export",
         "clearAll": "Clear All",
         "clearAllTitle": "Clear All Keys",
         "clearAllConfirm": "Are you sure you want to clear all {count} API keys? This action cannot be undone!",
@@ -126,6 +127,9 @@
             "deleteSuccess": "Deleted successfully!",
             "deleteFailed": "Failed to delete",
             "noKeysToClear": "No keys to clear",
+            "noKeysToExport": "No keys to export",
+            "noActiveKeysToExport": "No active keys to export",
+            "exportSuccess": "Successfully exported {count} API keys!",
             "clearAllSuccess": "Successfully cleared {count} API keys!",
             "clearAllFailed": "Failed to clear keys"
         }

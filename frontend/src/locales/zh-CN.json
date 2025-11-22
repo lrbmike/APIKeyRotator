@@ -98,6 +98,7 @@
         "batchImportPlaceholder": "请输入API密钥，每行一个：\n\nsk-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\nsk-yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy\nsk-zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz",
         "batchImportTip": "每行输入一个API密钥，系统将自动过滤空行和重复密钥",
         "batchImportConfirm": "开始导入",
+        "export": "导出",
         "clearAll": "清除全部",
         "clearAllTitle": "清除所有密钥",
         "clearAllConfirm": "确定要清除所有 {count} 个API密钥吗？此操作不可恢复！",
@@ -126,6 +127,9 @@
             "deleteSuccess": "删除成功！",
             "deleteFailed": "删除失败",
             "noKeysToClear": "没有可清除的密钥",
+            "noKeysToExport": "没有可导出的密钥",
+            "noActiveKeysToExport": "没有激活状态的密钥可导出",
+            "exportSuccess": "成功导出 {count} 个API密钥！",
             "clearAllSuccess": "成功清除 {count} 个API密钥！",
             "clearAllFailed": "清除密钥失败"
         }
