@@ -63,7 +63,7 @@ func Load() *Config {
 		GlobalProxyKeys: globalProxyKeys,
 
 		// 可选项
-		DatabasePath:       getEnv("DATABASE_PATH", "./data/api_key_rotator.db"),
+		DatabasePath:       getEnv("DATABASE_PATH", "/app/data/api_key_rotator.db"),
 		Port:               getEnv("BACKEND_PORT", "8000"),
 		AdminUsername:      adminUsername,
 		AdminUser:          adminUsername, // 别名，兼容性

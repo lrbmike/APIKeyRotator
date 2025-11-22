@@ -17,7 +17,7 @@ FROM alpine:3.22.0
 
 RUN apk add --no-cache ca-certificates tzdata
 
-RUN mkdir /app
+RUN mkdir -p /app/data
 
 COPY --from=builder /app/api-key-rotator /app/api-key-rotator
 
