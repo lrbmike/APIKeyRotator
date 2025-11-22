@@ -6,14 +6,12 @@
 
 **本项目现已支持统一镜像中的动态部署切换**，通过环境变量即可选择不同的部署方案：
 
-### 四种部署模式
+### 两种部署方案
 
-| 模式 | 数据库 | 缓存 | 适用场景 | QPS支持 |
-|------|--------|------|----------|---------|
-| 🟢 **轻量级模式** | SQLite | 内存缓存 | 开发测试、小型项目 | < 5K |
-| 🟡 **混合模式1** | MySQL | 内存缓存 | 中等规模项目 | < 10K |
-| 🟡 **混合模式2** | SQLite | Redis | 需要缓存的小型项目 | < 8K |
-| 🔴 **企业级模式** | MySQL | Redis | 生产环境、大型部署 | > 10K |
+| 方案 | 数据库 | 缓存 | 适用场景 | QPS支持 |
+|------|--------|------|----------|-------------|
+| 🟢 **轻量级部署** | SQLite | 内存缓存 | 个人项目、小型应用 | < 5K |
+| 🔴 **企业级部署** | MySQL | Redis | 企业应用、大型部署 | > 10K |
 
 ### 智能自动检测
 
@@ -222,12 +220,12 @@ cp .env.example.en .env
 
 #### 5. 访问地址
 
-**开发环境** (使用 Vite 和热重载):
+**开发模式** (使用 Vite 和热重载):
 *   **前端开发服务器**: `http://localhost:5173`
 *   **后端 API 根路径**: `http://localhost:8000/`
 
-**生产环境** (使用 Nginx):
-*   **Web 应用 (前端 + 后端 API)**: `http://localhost` (或 `http://localhost:80`，取决于你的 `.env` 配置)
+**运行模式** (独立服务):
+*   **Web 应用 (前端 + 后端 API)**: `http://localhost:8000`
 
 ## 非 Docker 本地开发 (可选)
 
@@ -370,53 +368,36 @@ else:
 
 ## 🔧 部署示例
 
-### 🟢 超轻量级部署（开发环境）
+### 🟢 轻量级部署
 
 ```bash
-# 无需数据库/缓存服务
+# SQLite + 内存缓存 - 简单高效
 docker run -d \
   -p 8000:8000 \
-  -e ADMIN_PASSWORD="dev123" \
-  -e JWT_SECRET="dev_jwt_secret_only" \
-  -e GLOBAL_PROXY_KEYS="dev_key" \
+  -e ADMIN_PASSWORD="your_password" \
+  -e JWT_SECRET="your_jwt_secret" \
+  -e GLOBAL_PROXY_KEYS="your_proxy_key" \
   -v $(pwd)/data:/app/data \
   api-key-rotator
 ```
 
-### 🟡 混合模式（小型生产环境）
+### 🔴 企业级部署
 
 ```bash
-# MySQL + 内存缓存
+# MySQL + Redis - 高性能和可扩展
 docker run -d \
   -p 8000:8000 \
-  -e ADMIN_PASSWORD="prod123" \
-  -e JWT_SECRET="prod_jwt_secret_very_long" \
-  -e GLOBAL_PROXY_KEYS="key1,key2" \
-  -e DB_HOST="mysql-server" \
+  -e ADMIN_PASSWORD="secure_password" \
+  -e JWT_SECRET="very_long_jwt_secret" \
+  -e GLOBAL_PROXY_KEYS="proxy_key1,proxy_key2" \
+  -e DB_HOST="mysql.internal" \
   -e DB_USER="appdb" \
   -e DB_PASSWORD="db_password" \
   -e DB_NAME="api_key_rotator" \
-  -v $(pwd)/data:/app/data \
-  api-key-rotator
-```
-
-### 🔴 完整企业级部署
-
-```bash
-# MySQL + Redis + 全功能
-docker run -d \
-  -p 8000:8000 \
-  -e ADMIN_PASSWORD="secure123" \
-  -e JWT_SECRET="enterprise_jwt_secret_extremely_long_and_secure" \
-  -e GLOBAL_PROXY_KEYS="prod_key1,prod_key2,prod_key3" \
-  -e DB_HOST="mysql.internal" \
-  -e DB_USER="appdb" \
-  -e DB_PASSWORD="secure_db_password" \
-  -e DB_NAME="api_key_rotator" \
   -e REDIS_HOST="redis.internal" \
-  -e REDIS_PORT=6389 \
-  -e REDIS_PASSWORD="secure_redis_password" \
-  -e LOG_LEVEL=warn \
+  -e REDIS_PORT=6379 \
+  -e REDIS_PASSWORD="redis_password" \
+  -e LOG_LEVEL=info \
   -v $(pwd)/data:/app/data \
   api-key-rotator
 ```
@@ -471,9 +452,8 @@ volumes:
 
 ### Q: 如何选择合适的部署模式？
 **A**:
-- **开发/测试**: 使用轻量级模式 (SQLite + 内存缓存)
-- **小型项目**: SQLite + Redis 或 MySQL + 内存缓存
-- **生产环境**: MySQL + Redis
+- **小型项目/个人使用**: 使用轻量级模式 (SQLite + 内存缓存)
+- **企业应用**: 使用企业级模式 (MySQL + Redis)
 
 ### Q: 如何查看当前使用的数据库和缓存类型？
 **A**: 启动应用时会显示日志信息：

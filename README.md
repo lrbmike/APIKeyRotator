@@ -2,25 +2,23 @@
 
 [English](README.md) | [中文简体](README_CN.md)
 
-## 🚀 Dynamic Deployment Solution
+## 🚀 Optimized Build Architecture
 
-**This project now supports dynamic deployment switching within a unified image** - simply select different deployment schemes through environment variables:
+**This project uses separate optimized builds for different deployment scenarios** - choose the right build for your needs:
 
-### Four Deployment Modes
+### Two Build Options
 
-| Mode | Database | Cache | Use Case | QPS Support |
-|------|----------|-------|----------|-------------|
-| 🟢 **Lightweight Mode** | SQLite | Memory Cache | Development, Small Projects | < 5K |
-| 🟡 **Hybrid Mode 1** | MySQL | Memory Cache | Medium Projects | < 10K |
-| 🟡 **Hybrid Mode 2** | SQLite | Redis | Small Projects needing Cache | < 8K |
-| 🔴 **Enterprise Mode** | MySQL | Redis | Production, Large Deployments | > 10K |
+| Build | Database | Cache | Image Size | Use Case | QPS Support |
+|-------|----------|-------|------------|----------|-------------|
+| 🟢 **Lightweight Build** | SQLite | Memory Cache | ~50MB | Personal Projects, Small Applications | < 5K |
+| 🔴 **Enterprise Build** | MySQL + SQLite | Redis + Memory Cache | ~80MB | Business Applications, Large Deployments | > 10K |
 
-### Smart Auto-Detection
+### Architecture Benefits
 
-The system automatically selects deployment schemes based on environment variables:
-- **MySQL variables detected** (`DB_HOST`, `DB_USER`, etc.) → Automatically uses MySQL
-- **Redis variables detected** (`REDIS_HOST`, `REDIS_PORT`, etc.) → Automatically uses Redis
-- **No relevant variables detected** → Defaults to SQLite + Memory Cache
+- **Optimized Dependencies**: Each build only includes necessary libraries
+- **Faster Downloads**: Smaller images for quick deployment
+- **Clean Code**: Interface abstraction separates business logic from infrastructure
+- **Easy Maintenance**: Clear separation between lightweight and enterprise features
 
 ### 📋 Complete Environment Variables
 
@@ -69,19 +67,33 @@ RESET_DB_TABLES=false
 
 ### Quick Deployment Examples
 
-**🟢 Lightweight Deployment (Recommended for small projects)**
+**🟢 Lightweight Build (SQLite + Memory Cache)**
 ```bash
+# Using pre-built image
 docker run -d \
   -p 8000:8000 \
   -e ADMIN_PASSWORD="your_password" \
   -e JWT_SECRET="your_jwt_secret" \
   -e GLOBAL_PROXY_KEYS="your_proxy_key" \
   -v $(pwd)/data:/app/data \
-  api-key-rotator
+  api-key-rotator:lightweight
+
+# OR build from source
+git clone https://github.com/your-repo/APIKeyRotator.git
+cd APIKeyRotator
+make build-lightweight
+docker run -d \
+  -p 8000:8000 \
+  -e ADMIN_PASSWORD="your_password" \
+  -e JWT_SECRET="your_jwt_secret" \
+  -e GLOBAL_PROXY_KEYS="your_proxy_key" \
+  -v $(pwd)/data:/app/data \
+  api-key-rotator:lightweight
 ```
 
-**🔴 Enterprise Deployment**
+**🔴 Enterprise Build (MySQL + Redis)**
 ```bash
+# Using pre-built image
 docker run -d \
   -p 8000:8000 \
   -e ADMIN_PASSWORD="your_password" \
@@ -92,16 +104,34 @@ docker run -d \
   -e DB_PASSWORD="your_db_password" \
   -e DB_NAME="api_key_rotator" \
   -e REDIS_HOST="redis-server" \
-  api-key-rotator
+  api-key-rotator:enterprise
+
+# OR build from source
+make build-enterprise
+docker run -d \
+  -p 8000:8000 \
+  -e ADMIN_PASSWORD="your_password" \
+  -e JWT_SECRET="your_jwt_secret" \
+  -e GLOBAL_PROXY_KEYS="your_proxy_key" \
+  -e DB_HOST="mysql-server" \
+  -e DB_USER="appdb" \
+  -e DB_PASSWORD="your_db_password" \
+  -e DB_NAME="api_key_rotator" \
+  -e REDIS_HOST="redis-server" \
+  api-key-rotator:enterprise
 ```
 
 📖 **See deployment details below** 👇
 
 ---
 
-## 🎯 Single Unified Codebase
+## 🎯 Interface-Abstraction Architecture
 
-**All deployment modes are now available in a unified codebase** - Simply control the deployment mode through environment variables for automatic configuration.
+**Clean separation between business logic and infrastructure** using interface abstraction pattern:
+
+- **Core Business Logic**: Independent of specific database or cache implementation
+- **Infrastructure Adapters**: Pluggable implementations for SQLite, MySQL, Memory Cache, and Redis
+- **Optimized Builds**: Separate builds for different deployment scenarios
 
 ## Introduction
 
@@ -113,44 +143,92 @@ The project includes a high-performance **Go backend** and a simple, easy-to-use
 
 ## ✨ Core Features
 
-*   **🔧 Dynamic Deployment Switching**: Single codebase supports multiple deployment schemes, intelligently selecting database and cache types through environment variables.
+*   **🔧 Optimized Builds**: Separate builds for lightweight and enterprise scenarios, reducing image size and dependencies.
+*   **🏗️ Interface Abstraction**: Clean architecture separating business logic from infrastructure implementations.
 *   **🔑 Centralized Key Management**: Manage API key pools for all services in a unified web interface.
 *   **🔄 Dynamic Key Rotation**: Atomic rotation based on cache (supports both memory cache and Redis) to effectively distribute API request quotas.
 *   **🚀 Type-Safe Proxies**:
     *   **Generic API Proxy (`/proxy`)**: Provides proxy services for any RESTful API.
     *   **LLM API Proxy (`/llm`)**: Offers native streaming support and an SDK-friendly `base_url` for large model APIs compatible with OpenAI's format. Supported providers include **OpenAI, Gemini, Anthropic**, etc.
-*   **🏗️ Highly Extensible Architecture**: The backend uses an adapter pattern, making it easy to extend support for new types of proxy services in the future.
 *   **🛡️ Secure Isolation**: All proxy requests are authenticated via global keys, with support for multiple keys to protect real backend keys from being exposed.
-*   **🐳 Unified Docker Support**: Single image supports all deployment modes, one-click Docker Compose deployment.
+*   **🐳 Efficient Docker Images**: Optimized multi-stage builds with minimal runtime dependencies.
 
 ## 🚀 Quick Start
 
-### Method 1: Lightweight Deployment (Recommended)
+### Method 1: Using Makefile (Recommended)
 
-The simplest deployment method, only requires setting essential environment variables:
+The simplest deployment method with optimized builds:
 
 ```bash
 # Clone the project
 git clone https://github.com/your-repo/APIKeyRotator.git
 cd APIKeyRotator
 
-# Build the image
-docker build -t api-key-rotator .
+# Build lightweight version (SQLite + Memory Cache)
+make build-lightweight
 
-# Start the service (SQLite + Memory Cache)
+# Start the service
 docker run -d \
   -p 8000:8000 \
   -e ADMIN_PASSWORD="your_password" \
   -e JWT_SECRET="your_jwt_secret" \
   -e GLOBAL_PROXY_KEYS="your_proxy_key" \
   -v $(pwd)/data:/app/data \
-  api-key-rotator
+  api-key-rotator:lightweight
 
 # Access the application
 open http://localhost:8000
 ```
 
-### Method 2: Docker Compose Deployment
+### Method 2: Direct Docker Build
+
+For enterprise deployment with external services:
+
+```bash
+# Build enterprise version (MySQL + Redis)
+make build-enterprise
+
+# Start with external MySQL and Redis
+docker run -d \
+  -p 8000:8000 \
+  -e ADMIN_PASSWORD="your_password" \
+  -e JWT_SECRET="your_jwt_secret" \
+  -e GLOBAL_PROXY_KEYS="your_proxy_key" \
+  -e DB_HOST="mysql-server" \
+  -e DB_USER="appdb" \
+  -e DB_PASSWORD="your_db_password" \
+  -e DB_NAME="api_key_rotator" \
+  -e REDIS_HOST="redis-server" \
+  api-key-rotator:enterprise
+```
+
+### Method 3: Pre-built Images
+
+```bash
+# Lightweight version
+docker run -d \
+  -p 8000:8000 \
+  -e ADMIN_PASSWORD="your_password" \
+  -e JWT_SECRET="your_jwt_secret" \
+  -e GLOBAL_PROXY_KEYS="your_proxy_key" \
+  -v $(pwd)/data:/app/data \
+  yourusername/api-key-rotator:lightweight
+
+# Enterprise version
+docker run -d \
+  -p 8000:8000 \
+  -e ADMIN_PASSWORD="your_password" \
+  -e JWT_SECRET="your_jwt_secret" \
+  -e GLOBAL_PROXY_KEYS="your_proxy_key" \
+  -e DB_HOST="mysql-server" \
+  -e DB_USER="appdb" \
+  -e DB_PASSWORD="your_db_password" \
+  -e DB_NAME="api_key_rotator" \
+  -e REDIS_HOST="redis-server" \
+  yourusername/api-key-rotator:enterprise
+```
+
+### Method 4: Docker Compose Deployment
 
 #### 1. Prerequisites
 
@@ -184,21 +262,25 @@ This project uses the `GLOBAL_PROXY_KEYS` environment variable to configure prox
 
 #### 4. Start the Services
 
-**🟢 Lightweight Mode (Default)**
+**🟢 Lightweight Deployment**
 ```bash
 # Copy English configuration template
 cp .env.example.en .env
 
-# Edit if needed
-nano .env
+# Build lightweight version first
+make build-lightweight
 
-docker-compose up --build -d
+# Start with Docker Compose
+docker-compose -f docker-compose.yml up -d
 ```
 
-**🔴 Enterprise Mode**
+**🔴 Enterprise Deployment**
 ```bash
 # Copy English configuration template
 cp .env.example.en .env
+
+# Build enterprise version first
+make build-enterprise
 
 # Add database and cache configuration
 cat >> .env << EOF
@@ -210,7 +292,8 @@ REDIS_HOST=redis
 REDIS_PASSWORD=your_redis_password
 EOF
 
-docker-compose -f docker-compose.prod.yml up --build -d
+# Start with external services
+docker-compose -f docker-compose.prod.yml up -d
 ```
 
 **Or use Chinese template**:
@@ -222,12 +305,7 @@ cp .env.example.cn .env
 
 #### 5. Access URLs
 
-**Development Environment** (with Vite and Hot Reload):
-*   **Frontend Dev Server**: `http://localhost:5173`
-*   **Backend API Root**: `http://localhost:8000/`
-
-**Production Environment** (with Nginx):
-*   **Web Application (Frontend + Backend API)**: `http://localhost` (or `http://localhost:80`, depending on your `.env` configuration)
+*   **Web Application**: `http://localhost:8000`
 
 ## Local Development Without Docker (Optional)
 
@@ -369,53 +447,36 @@ If you want to dive deeper into the code, please refer to the following document
 
 ## 🔧 Deployment Examples
 
-### 🟢 Ultra-Lightweight Deployment (Development)
+### 🟢 Lightweight Deployment
 
 ```bash
-# No database/cache services required
+# SQLite + Memory Cache - Simple and efficient
 docker run -d \
   -p 8000:8000 \
-  -e ADMIN_PASSWORD="dev123" \
-  -e JWT_SECRET="dev_jwt_secret_only" \
-  -e GLOBAL_PROXY_KEYS="dev_key" \
+  -e ADMIN_PASSWORD="your_password" \
+  -e JWT_SECRET="your_jwt_secret" \
+  -e GLOBAL_PROXY_KEYS="your_proxy_key" \
   -v $(pwd)/data:/app/data \
   api-key-rotator
 ```
 
-### 🟡 Hybrid Mode (Small Production)
+### 🔴 Enterprise Deployment
 
 ```bash
-# MySQL + Memory Cache
+# MySQL + Redis - High performance and scalable
 docker run -d \
   -p 8000:8000 \
-  -e ADMIN_PASSWORD="prod123" \
-  -e JWT_SECRET="prod_jwt_secret_very_long" \
-  -e GLOBAL_PROXY_KEYS="key1,key2" \
-  -e DB_HOST="mysql-server" \
+  -e ADMIN_PASSWORD="secure_password" \
+  -e JWT_SECRET="very_long_jwt_secret" \
+  -e GLOBAL_PROXY_KEYS="proxy_key1,proxy_key2" \
+  -e DB_HOST="mysql.internal" \
   -e DB_USER="appdb" \
   -e DB_PASSWORD="db_password" \
   -e DB_NAME="api_key_rotator" \
-  -v $(pwd)/data:/app/data \
-  api-key-rotator
-```
-
-### 🔴 Full Enterprise Mode
-
-```bash
-# MySQL + Redis + All Features
-docker run -d \
-  -p 8000:8000 \
-  -e ADMIN_PASSWORD="secure123" \
-  -e JWT_SECRET="enterprise_jwt_secret_extremely_long_and_secure" \
-  -e GLOBAL_PROXY_KEYS="prod_key1,prod_key2,prod_key3" \
-  -e DB_HOST="mysql.internal" \
-  -e DB_USER="appdb" \
-  -e DB_PASSWORD="secure_db_password" \
-  -e DB_NAME="api_key_rotator" \
   -e REDIS_HOST="redis.internal" \
-  -e REDIS_PORT=6389 \
-  -e REDIS_PASSWORD="secure_redis_password" \
-  -e LOG_LEVEL=warn \
+  -e REDIS_PORT=6379 \
+  -e REDIS_PASSWORD="redis_password" \
+  -e LOG_LEVEL=info \
   -v $(pwd)/data:/app/data \
   api-key-rotator
 ```
@@ -466,13 +527,42 @@ volumes:
   redis_data:
 ```
 
+### 🔧 Build Commands (Makefile)
+
+The project includes a Makefile for simplified build management:
+
+```bash
+# Show all available commands
+make info
+
+# Build lightweight version
+make build-lightweight
+
+# Build enterprise version
+make build-enterprise
+
+# Build both versions
+make build-all
+
+# Test builds (development)
+make test-lightweight
+make test-enterprise
+
+# Publish to Docker Hub
+make publish-lightweight
+make publish-enterprise
+make publish-all
+
+# Clean build cache
+make clean
+```
+
 ## ❓ Frequently Asked Questions
 
 ### Q: How do I choose the right deployment mode?
 **A**:
-- **Development/Testing**: Use lightweight mode (SQLite + Memory Cache)
-- **Small Projects**: SQLite + Redis or MySQL + Memory Cache
-- **Production Environment**: MySQL + Redis
+- **Small Projects/Personal Use**: Use lightweight mode (SQLite + Memory Cache)
+- **Business Applications**: Use enterprise mode (MySQL + Redis)
 
 ### Q: How can I check which database and cache types are currently being used?
 **A**: The application displays log information when starting:

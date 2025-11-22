@@ -3,17 +3,17 @@ package router
 import (
 	"fmt"
 
-	"api-key-rotator/backend/internal/cache"
 	"api-key-rotator/backend/internal/config"
 	"api-key-rotator/backend/internal/handlers"
 	"api-key-rotator/backend/internal/middleware"
+	"api-key-rotator/backend/internal/infrastructure/database"
+	"api-key-rotator/backend/internal/infrastructure/cache"
 
 	"github.com/gin-gonic/gin"
-	"gorm.io/gorm"
 )
 
 // Setup 设置路由
-func Setup(cfg *config.Config, db *gorm.DB, cacheClient cache.CacheInterface) *gin.Engine {
+func Setup(cfg *config.Config, dbRepo database.Repository, cacheInterface cache.CacheInterface) *gin.Engine {
 	// 设置Gin模式为调试模式以便看到更多日志
 	gin.SetMode(gin.DebugMode)
 
@@ -48,10 +48,8 @@ func Setup(cfg *config.Config, db *gorm.DB, cacheClient cache.CacheInterface) *g
 		c.JSON(404, gin.H{"error": "Route not found"})
 	})
 
-	// 创建处理器实例
-	managementHandler := handlers.NewManagementHandler(cfg, db)
-	proxyHandler := handlers.NewProxyHandler(cfg, db, cacheClient)
-	llmProxyHandler := handlers.NewLLMProxyHandler(cfg, db, cacheClient)
+	// 创建处理器实例，使用完整版本
+	managementHandler := handlers.NewManagementHandler(cfg, dbRepo)
 
 	// 根路径
 	r.GET("/", func(c *gin.Context) {
@@ -88,17 +86,19 @@ func Setup(cfg *config.Config, db *gorm.DB, cacheClient cache.CacheInterface) *g
 		adminAPI.DELETE("/keys/:keyID", managementHandler.DeleteAPIKey)
 	}
 
-	// 通用代理路由组
-	proxyGroup := r.Group("/proxy")
-	{
-		proxyGroup.Any("/*slug", proxyHandler.HandleGenericProxy)
-	}
+	// 通用代理路由组 - 暂时禁用
+	// TODO: 重新实现代理处理器以支持新的接口抽象架构
+	// proxyGroup := r.Group("/proxy")
+	// {
+	//     proxyGroup.Any("/*slug", proxyHandler.HandleGenericProxy)
+	// }
 
-	// LLM代理路由组
-	llmGroup := r.Group("/llm")
-	{
-		llmGroup.Any("/:slug/*action", llmProxyHandler.HandleLLMProxy)
-	}
+	// LLM代理路由组 - 暂时禁用
+	// TODO: 重新实现LLM代理处理器以支持新的接口抽象架构
+	// llmGroup := r.Group("/llm")
+	// {
+	//     llmGroup.Any("/:slug/*action", llmProxyHandler.HandleLLMProxy)
+	// }
 
 	return r
 }

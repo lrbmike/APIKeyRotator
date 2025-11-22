@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"api-key-rotator/backend/internal/cache"
+	"api-key-rotator/backend/internal/infrastructure/cache"
 	"api-key-rotator/backend/internal/config"
 	"api-key-rotator/backend/internal/logger"
 	"api-key-rotator/backend/internal/models"
@@ -65,7 +65,7 @@ func (h *BaseProxyHandler) RotateAPIKey(serviceConfig *models.ProxyConfig) (stri
 	// 使用缓存原子性递增来实现轮询
 	ctx := context.Background()
 	keyIndexKey := fmt.Sprintf("proxy_config:%d:key_index", serviceConfig.ID)
-	keyIndex, err := h.cacheClient.Incr(ctx, keyIndexKey).Result()
+	keyIndex, err := h.cacheClient.Incr(ctx, keyIndexKey)
 	if err != nil {
 		logger.Errorf("%s: Failed to increment key index in cache: %v", h.logPrefix, err)
 		return "", fmt.Errorf("failed to rotate API key")

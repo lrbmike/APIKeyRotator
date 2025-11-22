@@ -4,9 +4,7 @@ import (
 	"log"
 	"os"
 
-	"api-key-rotator/backend/internal/cache"
 	"api-key-rotator/backend/internal/config"
-	"api-key-rotator/backend/internal/database"
 	"api-key-rotator/backend/internal/logger"
 	"api-key-rotator/backend/internal/router"
 
@@ -29,14 +27,17 @@ func main() {
 	log.Printf("Database Type: %s", cfg.DBType)
 	log.Printf("Cache Type: %s", cfg.CacheType)
 
-	// 初始化数据库
-	db, err := database.Initialize(cfg)
+	// 创建基础设施工厂
+	factory := config.NewInfrastructureFactory(cfg)
+
+	// 初始化数据库仓库
+	dbRepo, err := factory.CreateDatabaseRepository()
 	if err != nil {
 		log.Fatal("Failed to initialize database:", err)
 	}
 
-	// 初始化缓存
-	cacheClient, err := cache.Initialize(cfg)
+	// 初始化缓存接口
+	cacheInterface, err := factory.CreateCacheInterface()
 	if err != nil {
 		log.Fatal("Failed to initialize cache:", err)
 	}
@@ -45,27 +46,26 @@ func main() {
 	resetTables := os.Getenv("RESET_DB_TABLES")
 	if resetTables == "true" {
 		log.Println("Resetting database tables...")
-		if err := database.ResetTables(db); err != nil {
+		if err := dbRepo.Reset(); err != nil {
 			log.Fatal("Failed to reset database tables:", err)
 		}
 		log.Println("Database tables reset successfully")
 	} else {
-		if err := database.Migrate(db); err != nil {
+		if err := dbRepo.Migrate(); err != nil {
 			log.Fatal("Failed to migrate database:", err)
 		}
 	}
 
 	// 初始化路由
-	r := router.Setup(cfg, db, cacheClient)
+	r := router.Setup(cfg, dbRepo, cacheInterface)
 
-	// 启动服务器
-	port := os.Getenv("BACKEND_PORT")
-	if port == "" {
-		port = "8000"
-	}
+	log.Println("Backend services initialized successfully")
+	log.Printf("Database: tables migrated successfully")
+	log.Printf("Cache: %s interface initialized", cfg.CacheType)
 
-	log.Printf("Starting server on port %s", port)
-	if err := r.Run(":" + port); err != nil {
+	// 启动Web服务器
+	log.Printf("Starting server on port %s", cfg.Port)
+	if err := r.Run(":" + cfg.Port); err != nil {
 		log.Fatal("Failed to start server:", err)
 	}
 }

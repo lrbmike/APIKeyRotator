@@ -9,7 +9,7 @@ import (
 	"strings"
 
 	"api-key-rotator/backend/internal/adapters"
-	"api-key-rotator/backend/internal/cache"
+	"api-key-rotator/backend/internal/infrastructure/cache"
 	"api-key-rotator/backend/internal/config"
 	"api-key-rotator/backend/internal/logger"
 	"api-key-rotator/backend/internal/models"

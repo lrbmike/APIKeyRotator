@@ -6,11 +6,12 @@ This project is the backend service for `API Key Rotator`, built with the **Gin*
 
 ## Architecture Overview
 
-The Go backend adopts the **Clean Architecture** design pattern, ensuring high standardization and extensibility.
+The Go backend adopts **Interface Abstraction Architecture** with **Optimized Builds**, ensuring high maintainability and deployment flexibility.
 
-*   **Data Models**: Defined in `internal/models/models.go`, using a unified `proxy_configs` table to manage all types of proxy configurations. The structure is clear and easy to extend.
-*   **Business Logic**: The core proxy logic is abstracted into `internal/services/` and `internal/adapters/`, achieving high code reuse and logical decoupling.
-*   **API Routing**: Defined in the `internal/handlers/` directory, where each file is responsible for a functional module (management, generic proxy, LLM proxy), ensuring clear responsibilities.
+*   **Interface Abstraction**: Clean separation between business logic and infrastructure implementations using well-defined interfaces.
+*   **Infrastructure Adapters**: Pluggable implementations for different databases (SQLite, MySQL) and caches (Memory, Redis).
+*   **Optimized Builds**: Separate builds for lightweight and enterprise scenarios, reducing image size and dependencies.
+*   **Modular Design**: Each component is independent and can be easily extended or replaced.
 
 ## Project Structure
 
@@ -19,47 +20,42 @@ backend/
 ├── main.go                    # Application entry point
 ├── go.mod                     # Go module definition
 ├── go.sum                     # Dependency version lock
-├── Dockerfile                 # Docker build file
+├── Dockerfile.lightweight     # Lightweight Docker build
+├── Dockerfile.enterprise      # Enterprise Docker build
 ├── README.md                  # Project documentation
 └── internal/                  # Internal packages
     ├── config/                # Configuration management
-    │   └── config.go
-    ├── database/              # Database connection and migration
-    │   └── database.go
-    ├── redis/                 # Redis connection
-    │   └── redis.go
-    ├── logger/                # Logger configuration
-    │   └── logger.go
-    ├── models/                # Data models
-    │   └── models.go
-    ├── dto/                   # Data Transfer Objects
-    │   └── dto.go
-    ├── utils/                 # Utility functions
-    │   └── utils.go
-    ├── middleware/            # Middleware
-    │   └── cors.go
-    ├── router/                # Route configuration
-    │   └── router.go
+    │   ├── config.go          # Configuration loading
+    │   └── factory.go         # Infrastructure factory
+    ├── infrastructure/        # Infrastructure layer (NEW)
+    │   ├── database/
+    │   │   ├── interface.go   # Database repository interface
+    │   │   ├── sqlite/        # SQLite implementation
+    │   │   └── mysql/         # MySQL implementation
+    │   └── cache/
+    │       ├── interface.go   # Cache interface
+    │       ├── memory/        # Memory cache implementation
+    │       └── redis/         # Redis implementation
+    ├── adapters/              # LLM adapters (needs interface update)
     ├── handlers/              # HTTP handlers
-    │   ├── management.go      # Management API
-    │   ├── proxy.go          # Generic proxy
-    │   └── llm_proxy.go      # LLM proxy
     ├── services/              # Business services
-    │   └── proxy_handler.go
-    └── adapters/              # LLM adapters
-        ├── base_adapter.go
-        ├── openai_adapter.go
-        └── gemini_adapter.go
+    ├── models/                # Data models
+    ├── dto/                   # Data Transfer Objects
+    ├── logger/                # Logger configuration
+    ├── middleware/            # Middleware
+    ├── router/                # Route configuration
+    └── utils/                 # Utility functions
 ```
 
 ## Tech Stack
 
 *   **Framework**: [Gin](https://gin-gonic.com/) - A high-performance HTTP web framework
 *   **ORM**: [GORM](https://gorm.io/) - The ORM library for Go
-*   **Database**: MySQL 8.0+
-*   **Cache**: Redis 6.0+
+*   **Database**: MySQL 8.0+ (Enterprise) / SQLite (Lightweight)
+*   **Cache**: Redis 6.0+ (Enterprise) / In-Memory (Lightweight)
 *   **Configuration**: Environment variables + [godotenv](https://github.com/joho/godotenv)
-*   **Containerization**: Docker + Docker Compose
+*   **Containerization**: Docker + Docker Compose with optimized builds
+*   **Architecture**: Interface Abstraction + Adapter Pattern
 
 ## Core Features
 
@@ -116,18 +112,37 @@ After starting the service, you can view the APIs as follows:
 
 ## Docker Deployment
 
-This project is deployed via the `docker-compose.yml` file in the root directory, which includes this Go backend as a default service.
+This project supports optimized builds via the Makefile in the root directory.
 
-### Building the Image
+### Building Images
 
 ```bash
-# Run in the project root directory
-docker-compose build backend
+# Build lightweight version (SQLite + Memory Cache)
+make build-lightweight
+
+# Build enterprise version (MySQL + Redis)
+make build-enterprise
+
+# Build both versions
+make build-all
 ```
 
 ### Using Docker Compose
 
-Run `docker-compose up` in the project root to start all services.
+Run the appropriate compose file based on your needs:
+
+```bash
+# Lightweight deployment
+docker-compose -f docker-compose.yml up -d
+
+# Enterprise deployment
+docker-compose -f docker-compose.prod.yml up -d
+```
+
+### Docker Image Tags
+
+* `api-key-rotator:lightweight` - ~50MB, SQLite + Memory Cache
+* `api-key-rotator:enterprise` - ~80MB, MySQL + Redis (includes all features)
 
 ## Testing
 
