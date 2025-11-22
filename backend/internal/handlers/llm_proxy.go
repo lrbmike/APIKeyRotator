@@ -125,6 +125,11 @@ func (h *LLMProxyHandler) forwardLLMRequest(c *gin.Context, target *services.Tar
 		targetURL.RawQuery = query.Encode()
 	}
 
+	// 记录请求详情以便调试
+	if target.Method == "POST" && len(target.Body) > 0 {
+		logger.Infof("Request body preview: %s", string(target.Body))
+	}
+
 	// 创建HTTP请求
 	req, err := http.NewRequest(target.Method, targetURL.String(), bytes.NewReader(target.Body))
 	if err != nil {
@@ -181,6 +186,12 @@ func (h *LLMProxyHandler) forwardLLMRequest(c *gin.Context, target *services.Tar
 		if err != nil {
 			return fmt.Errorf("failed to read response body: %w", err)
 		}
+
+		// 记录错误响应详情
+		if resp.StatusCode >= 400 {
+			logger.Errorf("Target server error (%d): %s", resp.StatusCode, string(body))
+		}
+
 		c.Data(resp.StatusCode, contentType, body)
 	}
 
