@@ -26,13 +26,15 @@ RUN CGO_ENABLED=1 GOOS=linux go build \
 FROM node:22-alpine AS frontend-builder
 WORKDIR /app/frontend
 
-# 安装 pnpm 并复制前端依赖文件
-COPY frontend/package.json frontend/pnpm-lock.yaml* ./
-RUN npm install -g pnpm && pnpm install
+# 安装 pnpm
+RUN npm install -g pnpm
 
-# 复制前端源代码并构建
+# 复制前端依赖文件和源代码
+COPY frontend/package.json ./
 COPY frontend/ ./
-RUN pnpm build
+
+# 安装依赖并构建
+RUN pnpm install && pnpm build
 
 # ---- Stage 3: Final Image ----
 # 使用轻量级 alpine 镜像作为最终运行环境

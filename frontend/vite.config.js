@@ -19,17 +19,28 @@ export default defineConfig(({ mode }) => {
         '@': path.resolve(__dirname, 'src')
       }
     },
+    build: {
+      rollupOptions: {
+        external: [],
+        output: {
+          manualChunks: undefined
+        }
+      },
+      commonjsOptions: {
+        include: [/node_modules/]
+      }
+    },
     server: {
       // 监听所有网络接口，以便 Docker 容器的端口可以被映射出去
-      host: '0.0.0.0', 
+      host: '0.0.0.0',
       // 指定开发服务器端口，与 docker-compose.yml 中保持一致
-      port: 5173, 
+      port: 5173,
       proxy: {
         // 将所有 /api 开头的请求代理到后端服务
         '/api': {
           // 现在 env.VITE_API_TARGET_URL 可以被正确读取了
           target: env.VITE_API_TARGET_URL || 'http://localhost:8000',
-          
+
           // changeOrigin: true 对于代理是必需的，它会修改请求头中的 Host，
           // 使其与目标服务器匹配，很多后端服务都需要这个配置。
           changeOrigin: true,
