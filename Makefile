@@ -3,16 +3,19 @@
 
 .PHONY: build-lightweight build-enterprise build-all test-lightweight test-enterprise
 
-# 构建轻量级版本 (SQLite + 内存缓存)
-build-lightweight:
-	docker build -f Dockerfile.lightweight -t api-key-rotator:lightweight .
+# 构建默认版本 (轻量级 - SQLite + 内存缓存)
+build:
+	docker build -t api-key-rotator .
 
 # 构建企业级版本 (MySQL + Redis)
 build-enterprise:
 	docker build -f Dockerfile.enterprise -t api-key-rotator:enterprise .
 
 # 构建所有版本
-build-all: build-lightweight build-enterprise
+build-all: build build-enterprise
+
+# 轻量级构建 (别名)
+build-lightweight: build
 
 # 测试轻量级版本
 test-lightweight:
