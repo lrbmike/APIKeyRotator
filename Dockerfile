@@ -15,18 +15,8 @@ ENV GOPROXY=https://goproxy.cn,direct
 COPY backend/go.mod backend/go.sum ./
 RUN go mod download
 
-# 复制后端源代码 - 只包含轻量级实现
-COPY backend/internal/config ./internal/config
-COPY backend/internal/infrastructure/database/sqlite ./internal/infrastructure/database/sqlite
-COPY backend/internal/infrastructure/cache/memory ./internal/infrastructure/cache/memory
-COPY backend/internal/models ./internal/models
-COPY backend/internal/dto ./internal/dto
-COPY backend/internal/logger ./internal/logger
-COPY backend/internal/middleware ./internal/middleware
-COPY backend/internal/router ./internal/router
-COPY backend/internal/handlers ./internal/handlers
-COPY backend/internal/services ./internal/services
-COPY backend/internal/utils ./internal/utils
+# 复制后端源代码 - 复制全部代码以避免导入错误
+COPY backend/internal ./internal
 COPY backend/main.go .
 
 # 静态编译应用 (CGO启用，静态链接所有库)
