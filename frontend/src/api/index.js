@@ -104,3 +104,13 @@ export const updateLlmConfig = (id, data) => {
 export const updateConfigStatus = (id, isActive) => {
   return apiClient.put(`/proxy-configs/${id}/status`, { is_active: isActive });
 }
+
+// 批量导入API密钥
+export const batchImportApiKeys = (configId, data) => {
+  return apiClient.post(`/proxy-configs/${configId}/keys/batch`, data);
+}
+
+// 清除所有API密钥
+export const clearAllApiKeys = (configId) => {
+  return apiClient.delete(`/proxy-configs/${configId}/keys`);
+}
