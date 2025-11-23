@@ -75,6 +75,10 @@ ENV BACKEND_PORT=8000 \
     DATABASE_PATH=/app/data/api_key_rotator.db \
     LOG_LEVEL=info
 
+# 在切换用户前创建数据库文件
+RUN touch /app/data/api_key_rotator.db && \
+    chown apikeyrotator:apikeyrotator /app/data/api_key_rotator.db
+
 # 切换到非特权用户
 USER apikeyrotator
 
@@ -82,5 +86,5 @@ USER apikeyrotator
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
     CMD ./api-key-rotator --health-check || exit 1
 
-# 启动应用 - 确保数据库文件存在且有正确权限
-CMD ["sh", "-c", "touch ${DATABASE_PATH:-/app/data/api_key_rotator.db} && ./api-key-rotator"]
+# 启动应用
+CMD ["./api-key-rotator"]
