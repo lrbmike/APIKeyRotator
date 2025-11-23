@@ -66,7 +66,7 @@ func (h *LLMProxyHandler) HandleLLMProxy(c *gin.Context) {
 func (h *LLMProxyHandler) prepareLLMRequest(c *gin.Context, slug, action string) (*services.TargetRequest, error) {
 	// 1. 加载基础配置以获取 api_format，这是选择适配器的关键
 	var proxyConfig models.ProxyConfig
-	if err := h.db.Preload("APIKeys").Where("slug = ? AND is_active = ? AND config_type = ?", slug, true, "llm").First(&proxyConfig).Error; err != nil {
+	if err := h.db.Preload("APIKeys").Where("slug = ? AND is_active = ? AND config_type = ?", slug, true, "LLM").First(&proxyConfig).Error; err != nil {
 		return nil, fmt.Errorf("LLM service configuration with slug '%s' not found or inactive", slug)
 	}
 
