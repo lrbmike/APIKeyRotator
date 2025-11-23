@@ -31,8 +31,24 @@ func NewAnthropicAdapter(cfg *config.Config, db *gorm.DB, cacheClient cache.Cach
 
 // ProcessRequest handles the request for the Anthropic API.
 func (a *AnthropicAdapter) ProcessRequest() (*services.TargetRequest, error) {
-	// 1. Authenticate the proxy request (hijack the 'x-api-key' header).
+	// Log all incoming headers for debugging
+	for name, values := range a.c.Request.Header {
+		for _, value := range values {
+			logger.Infof("Incoming Header: %s: %s", name, value)
+		}
+	}
+
+	// 1. Authenticate the proxy request. Try 'x-api-key', 'x-anthropic-api-key', then 'Authorization' header.
 	proxyKey := a.c.GetHeader("x-api-key")
+	if proxyKey == "" {
+		proxyKey = a.c.GetHeader("x-anthropic-api-key")
+	}
+	if proxyKey == "" {
+		authHeader := a.c.GetHeader("Authorization")
+		if strings.HasPrefix(authHeader, "Bearer ") {
+			proxyKey = strings.TrimPrefix(authHeader, "Bearer ")
+		}
+	}
 
 	validKeys := a.cfg.GetGlobalProxyKeys()
 	isValidKey := false
@@ -53,7 +69,7 @@ func (a *AnthropicAdapter) ProcessRequest() (*services.TargetRequest, error) {
 	}
 
 	// 3. Build the target request.
-	headers := utils.FilterRequestHeaders(a.c.Request.Header, []string{"x-api-key"})
+	headers := utils.FilterRequestHeaders(a.c.Request.Header, []string{"x-api-key", "Authorization", "x-anthropic-api-key"})
 
 	// 优先使用数据库中为该proxyConfig保存的APIKeyName, 否则回退到默认值
 	keyName := "x-api-key"
