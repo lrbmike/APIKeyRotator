@@ -36,19 +36,20 @@ export default defineConfig(({ mode }) => {
       // 指定开发服务器端口，与 docker-compose.yml 中保持一致
       port: 5173,
       proxy: {
-        // 将所有 /api 开头的请求代理到后端服务
-        '/api': {
-          // 现在 env.VITE_API_TARGET_URL 可以被正确读取了
+        // 将所有 /admin 开头的请求代理到后端服务
+        '/admin': {
           target: env.VITE_API_TARGET_URL || 'http://localhost:8000',
-
-          // changeOrigin: true 对于代理是必需的，它会修改请求头中的 Host，
-          // 使其与目标服务器匹配，很多后端服务都需要这个配置。
           changeOrigin: true,
-
-          // 如果您的后端 API 路由本身就包含了 /api (例如 /api/admin/login)，
-          // 那么就不需要 rewrite。
-          // 如果后端路由是 /admin/login，而前端请求的是 /api/admin/login，
-          // 那么就需要取消下面的注释来移除 /api 前缀。
+        },
+        // 将所有 /llm 开头的请求代理到后端服务
+        '/llm': {
+          target: env.VITE_API_TARGET_URL || 'http://localhost:8000',
+          changeOrigin: true,
+        },
+        // 保留 /api 代理规则以实现兼容性
+        '/api': {
+          target: env.VITE_API_TARGET_URL || 'http://localhost:8000',
+          changeOrigin: true,
           rewrite: (path) => path.replace(/^\/api/, ''),
         }
       }

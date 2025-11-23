@@ -31,13 +31,6 @@ func NewAnthropicAdapter(cfg *config.Config, db *gorm.DB, cacheClient cache.Cach
 
 // ProcessRequest handles the request for the Anthropic API.
 func (a *AnthropicAdapter) ProcessRequest() (*services.TargetRequest, error) {
-	// Log all incoming headers for debugging
-	for name, values := range a.c.Request.Header {
-		for _, value := range values {
-			logger.Infof("Incoming Header: %s: %s", name, value)
-		}
-	}
-
 	// 1. Authenticate the proxy request. Try 'x-api-key', 'x-anthropic-api-key', then 'Authorization' header.
 	proxyKey := a.c.GetHeader("x-api-key")
 	if proxyKey == "" {
