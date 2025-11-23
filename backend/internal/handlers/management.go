@@ -237,14 +237,22 @@ func (h *ManagementHandler) GetKeysForConfig(c *gin.Context) {
 	id := uint(id64)
 
 	// 检查配置是否存在
-	config, err := h.dbRepo.GetProxyConfigByID(uint(id))
+	_, err = h.dbRepo.GetProxyConfigByID(uint(id))
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Config not found"})
 		return
 	}
 
-	// 返回配置关联的API密钥
-	c.JSON(http.StatusOK, config.APIKeys)
+	// 获取配置关联的API密钥
+	var apiKeys []*models.APIKey
+	err = h.dbRepo.GetDB().Where("proxy_config_id = ?", id).Find(&apiKeys).Error
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	// 返回API密钥列表
+	c.JSON(http.StatusOK, apiKeys)
 }
 
 // CreateAPIKeyForConfig 为配置创建API密钥
