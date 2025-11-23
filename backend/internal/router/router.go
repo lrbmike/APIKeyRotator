@@ -51,7 +51,8 @@ func Setup(cfg *config.Config, dbRepo database.Repository, cacheInterface cache.
 		path := c.Request.URL.Path
 		// 检查是否是API请求
 		if len(path) >= 6 && path[:6] == "/admin" ||
-		   len(path) >= 10 && path[:10] == "/api/admin" {
+		   len(path) >= 7 && path[:7] == "/proxy" ||
+		   len(path) >= 5 && path[:5] == "/llm" {
 			// API路径返回404
 			fmt.Printf("404 Not Found: %s %s\n", c.Request.Method, c.Request.URL.Path)
 			c.JSON(404, gin.H{"error": "Route not found"})
@@ -63,13 +64,12 @@ func Setup(cfg *config.Config, dbRepo database.Repository, cacheInterface cache.
 
 	// 创建处理器实例，使用完整版本
 	managementHandler := handlers.NewManagementHandler(cfg, dbRepo)
+	proxyHandler := handlers.NewProxyHandler(cfg, dbRepo.GetDB(), cacheInterface)
+	llmProxyHandler := handlers.NewLLMProxyHandler(cfg, dbRepo.GetDB(), cacheInterface)
 
 	
-	// 管理API路由组 - 支持 /admin 和 /api/admin 两种路径
+	// 管理API路由组 - 后台管理接口
 	adminAPI := r.Group("/admin")
-	apiAdminAPI := r.Group("/api/admin")
-
-	// 为 /admin 路由组添加处理器
 	{
 		// 添加路由级别的调试中间件
 		adminAPI.Use(func(c *gin.Context) {
@@ -96,46 +96,13 @@ func Setup(cfg *config.Config, dbRepo database.Repository, cacheInterface cache.
 		adminAPI.DELETE("/keys/:keyID", managementHandler.DeleteAPIKey)
 	}
 
-	// 为 /api/admin 路由组添加相同的处理器
-	{
-		// 添加路由级别的调试中间件
-		apiAdminAPI.Use(func(c *gin.Context) {
-			fmt.Printf("API Admin Request: %s %s\n", c.Request.Method, c.Request.URL.Path)
-			c.Next()
-		})
+	// 通用代理路由组 - 公开API接口
+	proxyGroup := r.Group("/proxy")
+	proxyGroup.Any("/*slug", proxyHandler.HandleGenericProxy)
 
-		// 应用配置和认证
-		apiAdminAPI.GET("/app-config", managementHandler.GetAppConfig)
-		apiAdminAPI.POST("/login", managementHandler.Login)
-
-		// 代理配置管理
-		apiAdminAPI.POST("/proxy-configs", managementHandler.CreateConfig)
-		apiAdminAPI.GET("/proxy-configs", managementHandler.GetAllConfigs)
-		apiAdminAPI.GET("/proxy-configs/:id", managementHandler.GetConfigByID)
-		apiAdminAPI.PUT("/proxy-configs/:id", managementHandler.UpdateConfig)
-		apiAdminAPI.PUT("/proxy-configs/:id/status", managementHandler.UpdateConfigStatus)
-		apiAdminAPI.DELETE("/proxy-configs/:id", managementHandler.DeleteConfig)
-
-		// API密钥管理
-		apiAdminAPI.GET("/proxy-configs/:id/keys", managementHandler.GetKeysForConfig)
-		apiAdminAPI.POST("/proxy-configs/:id/keys", managementHandler.CreateAPIKeyForConfig)
-		apiAdminAPI.PATCH("/keys/:keyID", managementHandler.UpdateAPIKeyStatus)
-		apiAdminAPI.DELETE("/keys/:keyID", managementHandler.DeleteAPIKey)
-	}
-
-	// 通用代理路由组 - 暂时禁用
-	// TODO: 重新实现代理处理器以支持新的接口抽象架构
-	// proxyGroup := r.Group("/proxy")
-	// {
-	//     proxyGroup.Any("/*slug", proxyHandler.HandleGenericProxy)
-	// }
-
-	// LLM代理路由组 - 暂时禁用
-	// TODO: 重新实现LLM代理处理器以支持新的接口抽象架构
-	// llmGroup := r.Group("/llm")
-	// {
-	//     llmGroup.Any("/:slug/*action", llmProxyHandler.HandleLLMProxy)
-	// }
+	// LLM代理路由组 - 公开API接口
+	llmGroup := r.Group("/llm")
+	llmGroup.Any("/:slug/*action", llmProxyHandler.HandleLLMProxy)
 
 	return r
 }

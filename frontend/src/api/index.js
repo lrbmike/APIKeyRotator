@@ -3,7 +3,7 @@ import { ElMessage } from 'element-plus'
 
 // 创建一个通用的API客户端
 const apiClient = axios.create({
-  baseURL: '/api/admin',
+  baseURL: '/admin',
   headers: {
     'Content-Type': 'application/json',
   }
