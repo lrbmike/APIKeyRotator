@@ -45,7 +45,7 @@ FROM alpine:3.22.0
 
 # 安装必要的系统包
 RUN apk add --no-cache ca-certificates tzdata sqlite && \
-    addgroup -g apikeyrotator apikeyrotator && \
+    addgroup apikeyrotator && \
     adduser -D -s /bin/sh -G apikeyrotator apikeyrotator
 
 # 创建应用目录
