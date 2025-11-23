@@ -7,6 +7,7 @@ import (
 	"api-key-rotator/backend/internal/config"
 	"api-key-rotator/backend/internal/dto"
 	"api-key-rotator/backend/internal/infrastructure/database"
+	"api-key-rotator/backend/internal/logger"
 	"api-key-rotator/backend/internal/models"
 
 	"github.com/gin-gonic/gin"
@@ -343,4 +344,118 @@ func (h *ManagementHandler) DeleteAPIKey(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"message": "API key deleted successfully"})
+}
+
+// BatchCreateAPIKeys 批量创建API密钥
+func (h *ManagementHandler) BatchCreateAPIKeys(c *gin.Context) {
+	id, err := h.parseID(c)
+	if err != nil {
+		return
+	}
+
+	var req dto.BatchAPIKeyCreate
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	var config models.ProxyConfig
+	if err := h.dbRepo.GetDB().First(&config, id).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"detail": "ProxyConfig not found"})
+		return
+	}
+
+	response := dto.BatchAPIKeyImportResponse{
+		SuccessCount: 0,
+		FailedCount:  0,
+		SkippedCount: 0,
+		FailedKeys:   []string{},
+	}
+
+	for _, key := range req.Keys {
+		if key == "" {
+			continue
+		}
+
+		// 检查key是否已存在（批量导入时静默处理重复key）
+		var existingKey models.APIKey
+		err := h.dbRepo.GetDB().Where("key_value = ? AND proxy_config_id = ?", key, id).First(&existingKey).Error
+		if err == nil {
+			// key已存在，静默跳过（不返回错误提示）
+			logger.Infof("API key '%s' already exists for config %d, skipping", maskKey(key), id)
+			response.SkippedCount++
+			continue
+		}
+
+		apiKey := &models.APIKey{
+			KeyValue:      key,
+			IsActive:      true, // 默认启用
+			ProxyConfigID: int32(id),
+		}
+
+		if err := h.dbRepo.GetDB().Create(apiKey).Error; err != nil {
+			logger.Errorf("Failed to create API key '%s': %v", maskKey(key), err)
+			response.FailedCount++
+			response.FailedKeys = append(response.FailedKeys, key)
+		} else {
+			response.SuccessCount++
+		}
+	}
+
+	c.JSON(http.StatusOK, response)
+}
+
+// ClearAllAPIKeys 一键清除指定配置的所有API密钥
+func (h *ManagementHandler) ClearAllAPIKeys(c *gin.Context) {
+	id, err := h.parseID(c)
+	if err != nil {
+		return
+	}
+
+	var config models.ProxyConfig
+	if err := h.dbRepo.GetDB().First(&config, id).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"detail": "ProxyConfig not found"})
+		return
+	}
+
+	// 统计要删除的key数量
+	var count int64
+	if err := h.dbRepo.GetDB().Model(&models.APIKey{}).Where("proxy_config_id = ?", id).Count(&count).Error; err != nil {
+		logger.Errorf("Failed to count API keys for config %d: %v", id, err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to count API keys"})
+		return
+	}
+
+	// 批量删除所有API密钥
+	if err := h.dbRepo.GetDB().Where("proxy_config_id = ?", id).Delete(&models.APIKey{}).Error; err != nil {
+		logger.Errorf("Failed to delete API keys for config %d: %v", id, err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete API keys"})
+		return
+	}
+
+	logger.Infof("Successfully deleted %d API keys for config %d (%s)", count, id, config.Name)
+
+	response := dto.ClearAllAPIKeysResponse{
+		DeletedCount: int(count),
+	}
+
+	c.JSON(http.StatusOK, response)
+}
+
+// parseID 是一个辅助函数，用于从URL参数解析ID
+func (h *ManagementHandler) parseID(c *gin.Context) (int32, error) {
+	id64, err := strconv.ParseInt(c.Param("id"), 10, 32)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid ID"})
+		return 0, err
+	}
+	return int32(id64), nil
+}
+
+// maskKey 隐藏API密钥的敏感部分，用于日志输出
+func maskKey(key string) string {
+	if len(key) < 10 {
+		return "*****"
+	}
+	return key[:6] + "*****" + key[len(key)-4:]
 }

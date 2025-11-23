@@ -87,7 +87,7 @@ func (h *ProxyHandler) prepareGenericRequest(handler *services.BaseProxyHandler)
 
 	// 2. 加载配置
 	var proxyConfig models.ProxyConfig
-	if err := h.db.Preload("APIKeys").Where("slug = ? AND is_active = ? AND config_type = ?", handler.Slug, true, "generic").First(&proxyConfig).Error; err != nil {
+	if err := h.db.Preload("APIKeys").Where("slug = ? AND is_active = ? AND config_type = ?", handler.Slug, true, "GENERIC").First(&proxyConfig).Error; err != nil {
 		return nil, fmt.Errorf("generic service configuration with slug '%s' not found or inactive", handler.Slug)
 	}
 

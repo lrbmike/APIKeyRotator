@@ -89,3 +89,21 @@ func ToProxyConfigResponse(proxyConfig *models.ProxyConfig) ProxyConfigResponse 
 
 	return resp
 }
+
+// BatchAPIKeyCreate 批量创建API密钥请求
+type BatchAPIKeyCreate struct {
+	Keys []string `json:"keys" binding:"required"`
+}
+
+// BatchAPIKeyImportResponse 批量导入API密钥响应
+type BatchAPIKeyImportResponse struct {
+	SuccessCount int      `json:"success_count"`
+	FailedCount  int      `json:"failed_count"`
+	SkippedCount int      `json:"skipped_count"`
+	FailedKeys   []string `json:"failed_keys,omitempty"`
+}
+
+// ClearAllAPIKeysResponse 清除所有API密钥响应
+type ClearAllAPIKeysResponse struct {
+	DeletedCount int `json:"deleted_count"`
+}
