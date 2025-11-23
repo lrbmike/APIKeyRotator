@@ -2,6 +2,18 @@
 
 [English](README.md) | [中文简体](README_CN.md)
 
+An enterprise-grade API key management and rotation service, providing intelligent key pool management, automatic failover, and load balancing capabilities.
+
+## ✨ Key Features
+
+- 🔑 **API Key Management**: Centralized management of multiple API keys with add, delete, enable/disable operations
+- 🔄 **Smart Rotation**: Automatic rotation between multiple keys to avoid single points of failure and quota limits
+- 🌐 **Multi-API Support**: Supports both generic REST APIs and LLM model APIs (like OpenAI, Claude, etc.)
+- 🎯 **Proxy Service**: Unified proxy interface for different API types, simplifying client integration
+- 📊 **Management Interface**: Modern Vue3-based web management interface with bilingual support (English/Chinese)
+- 🔒 **Secure Authentication**: JWT token authentication and proxy key verification
+- 🏗️ **Flexible Architecture**: Supports SQLite/MySQL databases and memory/Redis caching
+
 ## 🚀 Interface Abstraction Architecture + Optimized Builds
 
 **This project uses interface abstraction architecture with separate optimized builds** - choose the right build for your needs:
@@ -9,7 +21,7 @@
 ### Two Build Options
 
 | Build | Database | Cache | Image Size | Use Case | QPS Support |
-|-------|----------|-------|------------|----------|-------------|
+|------|--------|------|----------|----------|-------------|
 | 🟢 **Lightweight Build** | SQLite | Memory Cache | ~50MB | Personal Projects, Small Applications | < 5K |
 | 🔴 **Enterprise Build** | MySQL | Redis | ~80MB | Business Applications, Large Deployments | > 10K |
 
@@ -23,22 +35,57 @@
 
 ### 🔧 Quick Start
 
-#### Lightweight Build (Default)
-```bash
-# Build lightweight version
-make build-lightweight
+#### 🏗️ Docker Build & Deployment
 
-# Run with default SQLite + Memory Cache
+**Lightweight Version (SQLite + Memory Cache)**
+```bash
+# Build lightweight image
+docker build -t api-key-rotator:latest .
+
+# Run container
+docker run -d \
+  --name api-key-rotator \
+  -p 8000:8000 \
+  -v $(pwd)/data:/app/data \
+  -e ADMIN_USERNAME=admin \
+  -e ADMIN_PASSWORD=your_admin_password \
+  -e JWT_SECRET=your_very_secret_and_random_jwt_key \
+  api-key-rotator:latest
+```
+
+**Enterprise Version (MySQL + Redis)**
+```bash
+# Build enterprise image
+docker build -f Dockerfile.enterprise -t api-key-rotator:enterprise .
+
+# Run container
+docker run -d \
+  --name api-key-rotator \
+  -p 8000:8000 \
+  -e DB_TYPE=mysql \
+  -e DB_HOST=your_mysql_host \
+  -e DB_USER=your_db_user \
+  -e DB_PASSWORD=your_db_password \
+  -e DB_NAME=api_key_rotator \
+  -e CACHE_TYPE=redis \
+  -e REDIS_HOST=your_redis_host \
+  -e REDIS_PORT=6379 \
+  -e ADMIN_USERNAME=admin \
+  -e ADMIN_PASSWORD=your_admin_password \
+  -e JWT_SECRET=your_very_secret_and_random_jwt_key \
+  api-key-rotator:enterprise
+```
+
+#### 🐳 Using Docker Compose
+
+**Lightweight Deployment**
+```bash
 docker-compose up -d
 ```
 
-#### Enterprise Build
+**Enterprise Deployment**
 ```bash
-# Build enterprise version
-make build-enterprise
-
-# Run with MySQL + Redis
-docker-compose -f docker-compose.prod.yml up -d
+docker-compose -f docker-compose.enterprise.yml up -d
 ```
 
 ### 📋 Environment Variables
@@ -55,7 +102,7 @@ DB_PASSWORD=your_strong_password
 DB_NAME=api_key_rotator
 DB_PORT=3306
 
-# OR use connection string
+# Or use connection string
 DATABASE_URL=mysql://user:password@tcp(host:port)/database?charset=utf8mb4&parseTime=True&loc=Local
 ```
 
@@ -130,7 +177,7 @@ api-key-rotator/
 ### 🛠️ Tech Stack
 
 - **Backend**: Go + Gin Framework + GORM ORM
-- **Frontend**: Vue 3 + TypeScript + Element Plus
+- **Frontend**: Vue 3 + JavaScript + Element Plus + Vue Router + Vue I18n
 - **Database**: MySQL 8.0+ (Enterprise) / SQLite (Lightweight)
 - **Cache**: Redis 6.0+ (Enterprise) / Memory Cache (Lightweight)
 - **Containerization**: Docker + Docker Compose
@@ -140,59 +187,45 @@ api-key-rotator/
 
 After starting the service, you can access the following APIs:
 
-- **Root Path**: `http://localhost:8000/` - Welcome message
-- **Admin API**: `http://localhost:8000/admin/*` - Configuration management
-- **Generic Proxy**: `http://localhost:8000/proxy/*` - Generic API proxy (coming soon)
-- **LLM Proxy**: `http://localhost:8000/llm/*` - LLM API proxy (coming soon)
+- **Root Path**: `http://localhost:8000/` - Service status information
+- **Admin API**: `http://localhost:8000/admin/*` - Backend management interface
+  - `GET /admin/app-config` - Get application configuration
+  - `POST /admin/login` - User login
+  - `GET/POST/PUT/DELETE /admin/proxy-configs` - Proxy configuration management
+  - `GET/POST/DELETE /admin/proxy-configs/:id/keys` - API key management
+  - `PATCH /admin/keys/:keyID` - Key status management
+- **Frontend Management Interface**: `http://localhost:8000/` - Vue3 admin management interface
 
-### 📦 Building Images
+### 🐳 Deployment Options
 
-#### Option 1: Using Default Build (Lightweight)
+#### Build Options Description
+
+| Build Type | Dockerfile | Database | Cache | Image Size | Use Case |
+|-----------|------------|---------|-------|------------|----------|
+| Lightweight | `Dockerfile` | SQLite | Memory | ~50MB | Personal development, small deployments |
+| Enterprise | `Dockerfile.enterprise` | MySQL | Redis | ~80MB | Production environment, large applications |
+
+#### Production Environment Recommendations
+
+**Data Persistence Configuration**
 ```bash
-# Build lightweight version (default, SQLite + Memory Cache)
-docker build -t api-key-rotator .
-
-# Build with custom tag
-docker build -t my-api-key-rotator:latest .
+# Ensure data persistence
+-v $(pwd)/data:/app/data          # SQLite database files
+-v $(pwd)/logs:/app/logs          # Application logs
 ```
 
-#### Option 2: Enterprise Build
+**Environment Variable Management**
 ```bash
-# Enterprise build (MySQL + Redis)
-docker build -f Dockerfile.enterprise -t api-key-rotator:enterprise .
-```
+# Create environment variable file
+cat > .env << EOF
+ADMIN_USERNAME=admin
+ADMIN_PASSWORD=your_secure_password
+JWT_SECRET=your_very_secret_key
+GLOBAL_PROXY_KEYS=your_proxy_key_1,proxy_key_2
+EOF
 
-### 🐳 Docker Deployment
-
-#### Quick Deployment (Recommended for Beginners)
-If you prefer the simplest approach, you can switch to the `sqlite` branch directly:
-```bash
-git checkout sqlite
-docker-compose up -d
-```
-The `sqlite` branch is a pure SQLite + memory cache version with simpler configuration, ideal for quick testing.
-
-#### Lightweight Version Deployment
-```bash
-docker-compose up -d
-```
-
-#### Enterprise Version Deployment
-```bash
-docker-compose -f docker-compose.enterprise.yml up -d
-```
-
-### 🧪 Testing
-
-```bash
-# Run all tests
-go test ./...
-
-# Run tests for a specific package
-go test ./internal/handlers
-
-# Run tests with coverage
-go test -cover ./...
+# Start with environment file
+docker run --env-file .env api-key-rotator:latest
 ```
 
 ### 🔒 Security
