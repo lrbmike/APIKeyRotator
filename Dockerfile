@@ -57,9 +57,10 @@ COPY --from=backend-builder /app/backend/api-key-rotator ./
 # 复制前端构建文件
 COPY --from=frontend-builder /app/frontend/dist ./static
 
-# 创建数据目录
+# 创建数据目录并设置权限
 RUN mkdir -p /app/data && \
-    chown -R apikeyrotator:apikeyrotator /app /app/data
+    chown -R apikeyrotator:apikeyrotator /app && \
+    chmod -R 755 /app/data
 
 # 设置权限
 RUN chmod +x ./api-key-rotator
@@ -81,5 +82,5 @@ USER apikeyrotator
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
     CMD ./api-key-rotator --health-check || exit 1
 
-# 启动应用
-CMD ["./api-key-rotator"]
+# 启动应用 - 确保数据库文件存在且有正确权限
+CMD ["sh", "-c", "touch ${DATABASE_PATH:-/app/data/api_key_rotator.db} && ./api-key-rotator"]
