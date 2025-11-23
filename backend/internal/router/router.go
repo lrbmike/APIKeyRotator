@@ -48,12 +48,10 @@ func Setup(cfg *config.Config, dbRepo database.Repository, cacheInterface cache.
 
 	// 添加SPA支持 - 对于非API路径，返回index.html
 	r.NoRoute(func(c *gin.Context) {
+		path := c.Request.URL.Path
 		// 检查是否是API请求
-		if c.Request.URL.Path[0:1] == "/" &&
-		   (c.Request.URL.Path == "/admin" ||
-		    c.Request.URL.Path[:5] == "/admin" ||
-		    c.Request.URL.Path[:4] == "/api/" ||
-		    c.Request.URL.Path == "/api") {
+		if len(path) >= 6 && path[:6] == "/admin" ||
+		   len(path) >= 10 && path[:10] == "/api/admin" {
 			// API路径返回404
 			fmt.Printf("404 Not Found: %s %s\n", c.Request.Method, c.Request.URL.Path)
 			c.JSON(404, gin.H{"error": "Route not found"})
@@ -67,8 +65,11 @@ func Setup(cfg *config.Config, dbRepo database.Repository, cacheInterface cache.
 	managementHandler := handlers.NewManagementHandler(cfg, dbRepo)
 
 	
-	// 管理API路由组
+	// 管理API路由组 - 支持 /admin 和 /api/admin 两种路径
 	adminAPI := r.Group("/admin")
+	apiAdminAPI := r.Group("/api/admin")
+
+	// 为 /admin 路由组添加处理器
 	{
 		// 添加路由级别的调试中间件
 		adminAPI.Use(func(c *gin.Context) {
@@ -93,6 +94,33 @@ func Setup(cfg *config.Config, dbRepo database.Repository, cacheInterface cache.
 		adminAPI.POST("/proxy-configs/:id/keys", managementHandler.CreateAPIKeyForConfig)
 		adminAPI.PATCH("/keys/:keyID", managementHandler.UpdateAPIKeyStatus)
 		adminAPI.DELETE("/keys/:keyID", managementHandler.DeleteAPIKey)
+	}
+
+	// 为 /api/admin 路由组添加相同的处理器
+	{
+		// 添加路由级别的调试中间件
+		apiAdminAPI.Use(func(c *gin.Context) {
+			fmt.Printf("API Admin Request: %s %s\n", c.Request.Method, c.Request.URL.Path)
+			c.Next()
+		})
+
+		// 应用配置和认证
+		apiAdminAPI.GET("/app-config", managementHandler.GetAppConfig)
+		apiAdminAPI.POST("/login", managementHandler.Login)
+
+		// 代理配置管理
+		apiAdminAPI.POST("/proxy-configs", managementHandler.CreateConfig)
+		apiAdminAPI.GET("/proxy-configs", managementHandler.GetAllConfigs)
+		apiAdminAPI.GET("/proxy-configs/:id", managementHandler.GetConfigByID)
+		apiAdminAPI.PUT("/proxy-configs/:id", managementHandler.UpdateConfig)
+		apiAdminAPI.PUT("/proxy-configs/:id/status", managementHandler.UpdateConfigStatus)
+		apiAdminAPI.DELETE("/proxy-configs/:id", managementHandler.DeleteConfig)
+
+		// API密钥管理
+		apiAdminAPI.GET("/proxy-configs/:id/keys", managementHandler.GetKeysForConfig)
+		apiAdminAPI.POST("/proxy-configs/:id/keys", managementHandler.CreateAPIKeyForConfig)
+		apiAdminAPI.PATCH("/keys/:keyID", managementHandler.UpdateAPIKeyStatus)
+		apiAdminAPI.DELETE("/keys/:keyID", managementHandler.DeleteAPIKey)
 	}
 
 	// 通用代理路由组 - 暂时禁用
