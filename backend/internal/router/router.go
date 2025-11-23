@@ -43,7 +43,7 @@ func Setup(cfg *config.Config, dbRepo database.Repository, cacheInterface cache.
 	})
 
 	// 静态文件服务 - 为前端提供静态资源
-	r.Static("/static", "./static")
+	r.StaticFile("/", "./static/index.html")
 	r.Static("/assets", "./static/assets")
 
 	// 添加SPA支持 - 对于非API路径，返回index.html
@@ -66,11 +66,7 @@ func Setup(cfg *config.Config, dbRepo database.Repository, cacheInterface cache.
 	// 创建处理器实例，使用完整版本
 	managementHandler := handlers.NewManagementHandler(cfg, dbRepo)
 
-	// 根路径 - 返回前端应用
-	r.GET("/", func(c *gin.Context) {
-		c.File("./static/index.html")
-	})
-
+	
 	// 管理API路由组
 	adminAPI := r.Group("/admin")
 	{
