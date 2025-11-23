@@ -2,7 +2,7 @@
 
 [English](README.md) | [中文简体](README_CN.md)
 
-An enterprise-grade API key management and rotation service, providing intelligent key pool management, automatic failover, and load balancing capabilities.
+A lightweight API key management and rotation service designed to provide a simple and efficient solution. It helps developers easily manage API keys through intelligent key pool management, automatic failover, and load balancing. The project also offers enterprise-level deployment options to suit different use cases.
 
 ## ✨ Key Features
 
@@ -90,89 +90,43 @@ docker-compose -f docker-compose.enterprise.yml up -d
 
 ### 📋 Environment Variables
 
-#### Database Configuration
-```bash
-# SQLite (Lightweight - Default)
-DATABASE_PATH=/app/data/api_key_rotator.db
-
-# MySQL (Enterprise)
-DB_HOST=localhost
-DB_USER=appdb
-DB_PASSWORD=your_strong_password
-DB_NAME=api_key_rotator
-DB_PORT=3306
-
-# Or use connection string
-DATABASE_URL=mysql://user:password@tcp(host:port)/database?charset=utf8mb4&parseTime=True&loc=Local
-```
-
-#### Cache Configuration
-```bash
-# Memory Cache (Lightweight - Default)
-# No additional configuration needed
-
-# Redis (Enterprise)
-REDIS_HOST=localhost
-REDIS_PORT=6379
-REDIS_PASSWORD=your_password
-REDIS_URL=redis://localhost:6379/0
-```
-
-#### Application Configuration
-```bash
-# Server
-BACKEND_PORT=8000
-LOG_LEVEL=info
-
-# Authentication
-ADMIN_USERNAME=admin
-ADMIN_PASSWORD=your_admin_password_here
-JWT_SECRET=your_very_secret_and_random_jwt_key
-
-# Proxy
-GLOBAL_PROXY_KEYS=your_secure_global_proxy_key
-PROXY_TIMEOUT=30
-PROXY_PUBLIC_BASE_URL=http://localhost:8000
-
-# Database reset option
-RESET_DB_TABLES=false
-```
+| Variable | Description | Default | Example |
+|---|---|---|---|
+| **General** | | | |
+| `BACKEND_PORT` | Port for the backend service. | `8000` | `8000` |
+| `LOG_LEVEL` | Logging level. | `info` | `debug` |
+| `ADMIN_USERNAME` | Initial admin username. | `admin` | `admin` |
+| `ADMIN_PASSWORD` | Initial admin password. | `your_admin_password` | `mysecretpassword` |
+| `JWT_SECRET` | Secret key for JWT tokens. | `your_very_secret...` | `a_long_random_string` |
+| `GLOBAL_PROXY_KEYS` | Global proxy keys, comma-separated. | (empty) | `key1,key2` |
+| `PROXY_TIMEOUT` | Proxy request timeout in seconds. | `30` | `60` |
+| `PROXY_PUBLIC_BASE_URL` | Public access URL for the service. | `http://localhost:8000` | `https://your.domain.com` |
+| **Database** | | | |
+| `DB_TYPE` | Database type. | `sqlite` | `mysql` |
+| `DATABASE_PATH` | Path for SQLite database file. | `/app/data/rotator.db` | |
+| `DB_HOST` | MySQL host. | | `localhost` |
+| `DB_USER` | MySQL username. | | `dbuser` |
+| `DB_PASSWORD` | MySQL password. | | `dbpass` |
+| `DB_NAME` | MySQL database name. | | `rotator_db` |
+| `DB_PORT` | MySQL port. | | `3306` |
+| `DATABASE_URL` | Database connection string (priority). | | `mysql://...` |
+| **Cache** | | | |
+| `CACHE_TYPE` | Cache type. | `memory` | `redis` |
+| `REDIS_HOST` | Redis host. | | `localhost` |
+| `REDIS_PORT` | Redis port. | | `6379` |
+| `REDIS_PASSWORD` | Redis password. | | (empty) |
+| `REDIS_URL` | Redis connection string (priority). | | `redis://...` |
 
 ### 🏗️ Project Structure
 
-```
-api-key-rotator/
-├── docker-compose.yml                # Lightweight deployment
-├── docker-compose.enterprise.yml     # Enterprise deployment
-├── Dockerfile                        # Default build (lightweight)
-├── Dockerfile.enterprise             # Enterprise build
-├── README.md                         # Project documentation
-└── backend/                          # Go backend service
-    ├── main.go                       # Application entry point
-    ├── go.mod                        # Go module definition
-    └── internal/                      # Internal packages
-        ├── config/                    # Configuration management
-        │   ├── config.go              # Configuration loading
-        │   └── factory.go             # Infrastructure factory
-        ├── infrastructure/            # Infrastructure layer
-        │   ├── database/
-        │   │   ├── interface.go        # Database repository interface
-        │   │   ├── sqlite/             # SQLite implementation
-        │   │   └── mysql/              # MySQL implementation
-        │   └── cache/
-        │       ├── interface.go        # Cache interface
-        │       ├── memory/             # Memory cache implementation
-        │       └── redis/              # Redis implementation
-        ├── handlers/                  # HTTP handlers
-        ├── models/                    # Data models
-        ├── dto/                       # Data transfer objects
-        ├── router/                    # Route configuration
-        └── logger/                    # Logger configuration
-└── frontend/                         # Vue.js frontend
-    ├── src/                          # Source code
-    ├── package.json                  # Dependencies
-    └── Dockerfile                    # Frontend build
-```
+The project is divided into two main parts: `backend` (a core API service written in Go) and `frontend` (a management interface built with Vue.js). Each part has its own `README.md` file with a more detailed structure description.
+
+- `backend/`: The backend service responsible for API proxying, key management, and authentication.
+- `frontend/`: The frontend application that provides a user-friendly web interface for managing proxy configurations and keys.
+- `Dockerfile`: Used to build the Docker image for the lightweight version.
+- `Dockerfile.enterprise`: Used to build the Docker image for the enterprise version.
+- `docker-compose.yml`: For quick deployment of the lightweight version.
+- `docker-compose.enterprise.yml`: For quick deployment of the enterprise version.
 
 ### 🛠️ Tech Stack
 
@@ -183,18 +137,39 @@ api-key-rotator/
 - **Containerization**: Docker + Docker Compose
 - **Architecture**: Interface Abstraction + Adapter Pattern
 
-### 🌐 API Endpoints
+### 📖 Usage Example
 
-After starting the service, you can access the following APIs:
+Let's take `OpenRouter` as an example. You can set it up as follows:
 
-- **Root Path**: `http://localhost:8000/` - Service status information
-- **Admin API**: `http://localhost:8000/admin/*` - Backend management interface
-  - `GET /admin/app-config` - Get application configuration
-  - `POST /admin/login` - User login
-  - `GET/POST/PUT/DELETE /admin/proxy-configs` - Proxy configuration management
-  - `GET/POST/DELETE /admin/proxy-configs/:id/keys` - API key management
-  - `PATCH /admin/keys/:keyID` - Key status management
-- **Frontend Management Interface**: `http://localhost:8000/` - Vue3 admin management interface
+1.  Create a new proxy configuration in the management interface.
+2.  **Service Slug**: Enter `openai-openrouter` (customizable).
+3.  **API Format**: Select `OpenAI Compatible`.
+4.  **Target Base URL**: Enter `https://openrouter.ai/api/v1`.
+5.  Add your `OpenRouter` API keys to the key pool for this configuration.
+
+Once configured, you can use it in any OpenAI-compatible client (e.g., `Cherry Studio`). Set the client's `Base URL` or `API Endpoint` to:
+
+```
+${PROXY_PUBLIC_BASE_URL}/llm/openai-openrouter
+```
+
+And fill the `API Key` field with the global proxy key you set in the `GLOBAL_PROXY_KEYS` environment variable.
+
+- `${PROXY_PUBLIC_BASE_URL}` is the public access address you configure for the service (e.g., `http://localhost:8000`).
+- The `openai-openrouter` in `/llm/openai-openrouter` corresponds to the **Service Slug** you set.
+
+You can also test it directly with `curl`:
+```bash
+# Call the proxy endpoint using curl
+curl -X POST ${PROXY_PUBLIC_BASE_URL}/llm/openai-openrouter/v1/chat/completions \
+-H "Authorization: Bearer ${GLOBAL_PROXY_KEYS}" \
+-H "Content-Type: application/json" \
+-d '{
+  "model": "google/gemini-flash-1.5",
+  "messages": [{"role": "user", "content": "Hello!"}],
+  "stream": false
+}'
+```
 
 ### 🐳 Deployment Options
 

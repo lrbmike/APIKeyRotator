@@ -72,8 +72,10 @@
                 "targetUrl": "请输入目标URL",
                 "targetBaseUrl": "请输入目标Base URL",
                 "keyLocation": "请选择密钥位置",
-                "keyName": "请输入密钥名称"
-            }
+            "keyName": "请输入密钥名称"
+            },
+            "cancel": "取 消",
+            "confirm": "确 认"
         },
         "messages": {
             "loadFailed": "加载配置列表失败",

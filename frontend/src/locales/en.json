@@ -73,7 +73,9 @@
                 "targetBaseUrl": "Please enter a target Base URL",
                 "keyLocation": "Please select a key location",
                 "keyName": "Please enter a key name"
-            }
+            },
+            "cancel": "Cancel",
+            "confirm": "Confirm"
         },
         "messages": {
             "loadFailed": "Failed to load configuration list",
