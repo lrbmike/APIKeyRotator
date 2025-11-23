@@ -44,6 +44,7 @@ func Setup(cfg *config.Config, dbRepo database.Repository, cacheInterface cache.
 
 	// 静态文件服务 - 为前端提供静态资源
 	r.Static("/static", "./static")
+	r.Static("/assets", "./static/assets")
 
 	// 添加SPA支持 - 对于非API路径，返回index.html
 	r.NoRoute(func(c *gin.Context) {
