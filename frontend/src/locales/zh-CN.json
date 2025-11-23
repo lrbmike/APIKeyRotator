@@ -1,4 +1,8 @@
 {
+    "common": {
+        "cancel": "取消",
+        "confirm": "确认"
+    },
     "test": "测试",
     "layout": {
         "title": "API 密钥轮换器",
@@ -60,8 +64,6 @@
             "keyName": "密钥名称",
             "keyNamePlaceholder": "例如：Authorization 或 access_key",
             "keyNamePlaceholderOptional": "留空则使用适配器默认配置",
-            "cancel": "取消",
-            "confirm": "确认",
             "validation": {
                 "type": "请选择服务类型",
                 "name": "请输入服务名称",

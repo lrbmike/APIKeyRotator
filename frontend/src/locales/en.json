@@ -1,4 +1,8 @@
 {
+    "common": {
+        "cancel": "Cancel",
+        "confirm": "Confirm"
+    },
     "test": "Test",
     "layout": {
         "title": "API Key Rotator",
@@ -60,8 +64,6 @@
             "keyName": "Key Name",
             "keyNamePlaceholder": "e.g., Authorization or access_key",
             "keyNamePlaceholderOptional": "Leave blank to use adapter default",
-            "cancel": "Cancel",
-            "confirm": "Confirm",
             "validation": {
                 "type": "Please select a service type",
                 "name": "Please enter a service name",
