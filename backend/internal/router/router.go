@@ -42,20 +42,32 @@ func Setup(cfg *config.Config, dbRepo database.Repository, cacheInterface cache.
 		c.Next()
 	})
 
-	// 添加404处理器
+	// 静态文件服务 - 为前端提供静态资源
+	r.Static("/static", "./static")
+
+	// 添加SPA支持 - 对于非API路径，返回index.html
 	r.NoRoute(func(c *gin.Context) {
-		fmt.Printf("404 Not Found: %s %s\n", c.Request.Method, c.Request.URL.Path)
-		c.JSON(404, gin.H{"error": "Route not found"})
+		// 检查是否是API请求
+		if c.Request.URL.Path[0:1] == "/" &&
+		   (c.Request.URL.Path == "/admin" ||
+		    c.Request.URL.Path[:5] == "/admin" ||
+		    c.Request.URL.Path[:4] == "/api/" ||
+		    c.Request.URL.Path == "/api") {
+			// API路径返回404
+			fmt.Printf("404 Not Found: %s %s\n", c.Request.Method, c.Request.URL.Path)
+			c.JSON(404, gin.H{"error": "Route not found"})
+		} else {
+			// 非API路径，返回前端index.html
+			c.File("./static/index.html")
+		}
 	})
 
 	// 创建处理器实例，使用完整版本
 	managementHandler := handlers.NewManagementHandler(cfg, dbRepo)
 
-	// 根路径
+	// 根路径 - 返回前端应用
 	r.GET("/", func(c *gin.Context) {
-		c.JSON(200, gin.H{
-			"message": "Welcome to the API Key Rotator",
-		})
+		c.File("./static/index.html")
 	})
 
 	// 管理API路由组
