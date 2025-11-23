@@ -92,6 +92,17 @@
         "newKey": "New API Key",
         "placeholder": "Enter the full API Key",
         "add": "Add",
+        "batchImport": "Batch Import",
+        "batchImportTitle": "Batch Import API Keys",
+        "batchImportLabel": "Key List",
+        "batchImportPlaceholder": "Enter API keys, one per line:\n\nsk-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\nsk-yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy\nsk-zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz",
+        "batchImportTip": "Enter one API key per line, the system will automatically filter empty lines and duplicate keys",
+        "batchImportConfirm": "Start Import",
+        "export": "Export",
+        "clearAll": "Clear All",
+        "clearAllTitle": "Clear All Keys",
+        "clearAllConfirm": "Are you sure you want to clear all {count} API keys? This action cannot be undone!",
+        "clearAllConfirmBtn": "Confirm Clear",
         "deleteConfirm": "Are you sure you want to delete this key?",
         "delete": "Delete",
         "table": {
@@ -103,12 +114,24 @@
         "messages": {
             "loadFailed": "Failed to load key list",
             "keyRequired": "Please enter an API Key",
+            "keysRequired": "Please enter the API keys to import",
+            "noValidKeys": "No valid API keys found",
             "addSuccess": "Added successfully!",
             "addFailed": "Failed to add",
+            "batchImportSuccess": "Successfully imported {count} keys!",
+            "batchImportFailed": "Import failed, {count} keys could not be imported",
+            "batchImportPartial": "Import completed: {success} successful, {failed} failed",
+            "batchImportError": "An error occurred during batch import",
             "statusUpdateSuccess": "Status updated successfully!",
             "statusUpdateFailed": "Failed to update status",
             "deleteSuccess": "Deleted successfully!",
-            "deleteFailed": "Failed to delete"
+            "deleteFailed": "Failed to delete",
+            "noKeysToClear": "No keys to clear",
+            "noKeysToExport": "No keys to export",
+            "noActiveKeysToExport": "No active keys to export",
+            "exportSuccess": "Successfully exported {count} API keys!",
+            "clearAllSuccess": "Successfully cleared {count} API keys!",
+            "clearAllFailed": "Failed to clear keys"
         }
     },
     "langSwitcher": {

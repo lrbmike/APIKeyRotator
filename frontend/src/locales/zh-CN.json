@@ -92,6 +92,17 @@
         "newKey": "新API Key",
         "placeholder": "请输入完整的API Key",
         "add": "添加",
+        "batchImport": "批量导入",
+        "batchImportTitle": "批量导入API密钥",
+        "batchImportLabel": "密钥列表",
+        "batchImportPlaceholder": "请输入API密钥，每行一个：\n\nsk-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\nsk-yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy\nsk-zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz",
+        "batchImportTip": "每行输入一个API密钥，系统将自动过滤空行和重复密钥",
+        "batchImportConfirm": "开始导入",
+        "export": "导出",
+        "clearAll": "清除全部",
+        "clearAllTitle": "清除所有密钥",
+        "clearAllConfirm": "确定要清除所有 {count} 个API密钥吗？此操作不可恢复！",
+        "clearAllConfirmBtn": "确认清除",
         "deleteConfirm": "确定要删除这个Key吗?",
         "delete": "删除",
         "table": {
@@ -103,12 +114,24 @@
         "messages": {
             "loadFailed": "加载密钥列表失败",
             "keyRequired": "请输入API Key",
+            "keysRequired": "请输入要导入的API密钥",
+            "noValidKeys": "没有找到有效的API密钥",
             "addSuccess": "添加成功！",
             "addFailed": "添加失败",
+            "batchImportSuccess": "成功导入 {count} 个密钥！",
+            "batchImportFailed": "导入失败，{count} 个密钥无法导入",
+            "batchImportPartial": "导入完成：成功 {success} 个，失败 {failed} 个",
+            "batchImportError": "批量导入过程中发生错误",
             "statusUpdateSuccess": "状态更新成功！",
             "statusUpdateFailed": "状态更新失败",
             "deleteSuccess": "删除成功！",
-            "deleteFailed": "删除失败"
+            "deleteFailed": "删除失败",
+            "noKeysToClear": "没有可清除的密钥",
+            "noKeysToExport": "没有可导出的密钥",
+            "noActiveKeysToExport": "没有激活状态的密钥可导出",
+            "exportSuccess": "成功导出 {count} 个API密钥！",
+            "clearAllSuccess": "成功清除 {count} 个API密钥！",
+            "clearAllFailed": "清除密钥失败"
         }
     },
     "langSwitcher": {
