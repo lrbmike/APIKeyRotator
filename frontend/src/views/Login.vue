@@ -52,8 +52,8 @@ const handleLogin = async () => {
       loading.value = true
       try {
         const response = await login(loginForm.username, loginForm.password)
-        if (response.data.access_token) {
-          localStorage.setItem('authToken', response.data.access_token)
+        if (response.data.success) {
+          localStorage.setItem('authToken', 'session-token')
           ElMessage.success(t('login.loginSuccess'))
           router.push({ name: 'Dashboard' })
         }
