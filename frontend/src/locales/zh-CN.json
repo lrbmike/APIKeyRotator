@@ -58,6 +58,12 @@
             "anthropicNative": "Anthropic Native",
             "targetBaseUrl": "目标Base URL",
             "targetBaseUrlPlaceholder": "https://api.openai.com/v1",
+            "outputFormat": "客户端格式",
+            "outputFormatPlaceholder": "选择客户端SDK格式 (启用双向转换)",
+            "outputFormatNone": "与API格式相同",
+            "outputFormatOpenai": "OpenAI SDK",
+            "outputFormatAnthropic": "Anthropic SDK",
+            "outputFormatGemini": "Gemini SDK",
             "keyLocation": "密钥位置",
             "keyLocationPlaceholder": "选择密钥注入位置",
             "keyLocationPlaceholderOptional": "留空则使用适配器默认配置",
@@ -72,7 +78,7 @@
                 "targetUrl": "请输入目标URL",
                 "targetBaseUrl": "请输入目标Base URL",
                 "keyLocation": "请选择密钥位置",
-            "keyName": "请输入密钥名称"
+                "keyName": "请输入密钥名称"
             },
             "cancel": "取 消",
             "confirm": "确 认"

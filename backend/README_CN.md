@@ -92,6 +92,8 @@ backend/
    cp ../.env.example ../.env
    ```
 
+    需要配置数据库文件路径 `DATABASE_PATH` ，并保存目录存在，如：`DATABASE_PATH=./data/api_key_rotator.db`
+
 4. **运行服务**
    ```bash
    go run main.go

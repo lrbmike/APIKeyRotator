@@ -71,7 +71,7 @@ func FilterResponseHeaders(headers map[string][]string) map[string]string {
 	// 这些是不能从上游服务器透传给最终客户端的Header
 	hopByHopHeaders := []string{
 		"connection", "keep-alive", "proxy-authenticate", "proxy-authorization",
-		"te", "trailers", "transfer-encoding", "upgrade",
+		"te", "trailers", "transfer-encoding", "upgrade", "content-length",
 	}
 
 	toRemove := make(map[string]bool)

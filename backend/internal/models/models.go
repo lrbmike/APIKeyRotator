@@ -23,6 +23,7 @@ type ProxyConfig struct {
 	// Fields from LLMAPIConfig (nullable)
 	TargetBaseURL *string `json:"target_base_url,omitempty" gorm:"size:255"`
 	APIFormat     *string `json:"api_format,omitempty" gorm:"size:50;default:openai_compatible"`
+	OutputFormat  *string `json:"output_format,omitempty" gorm:"size:50;default:none"`
 
 	// 关系: 一个配置可以有多个 API Key
 	APIKeys []APIKey `json:"api_keys" gorm:"foreignKey:ProxyConfigID;constraint:OnDelete:CASCADE"`

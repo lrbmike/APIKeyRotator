@@ -31,6 +31,7 @@ type ProxyConfigCreate struct {
 	TargetURL      *string `json:"target_url,omitempty"`
 	TargetBaseURL  *string `json:"target_base_url,omitempty"`
 	APIFormat      *string `json:"api_format,omitempty"`
+	OutputFormat   *string `json:"output_format,omitempty"`
 }
 
 // ProxyConfigStatusUpdate 更新代理配置状态的请求
@@ -63,6 +64,7 @@ type ProxyConfigResponse struct {
 	TargetURL      *string         `json:"target_url,omitempty"`
 	TargetBaseURL  *string         `json:"target_base_url,omitempty"`
 	APIFormat      *string         `json:"api_format,omitempty"`
+	OutputFormat   *string         `json:"output_format,omitempty"`
 }
 
 // ToProxyConfigResponse 将模型转换为响应DTO
@@ -78,6 +80,7 @@ func ToProxyConfigResponse(proxyConfig *models.ProxyConfig) ProxyConfigResponse 
 		TargetURL:     proxyConfig.TargetURL,
 		TargetBaseURL: proxyConfig.TargetBaseURL,
 		APIFormat:     proxyConfig.APIFormat,
+		OutputFormat:  proxyConfig.OutputFormat,
 	}
 
 	if proxyConfig.APIKeyLocation != nil {

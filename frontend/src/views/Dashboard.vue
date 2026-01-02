@@ -93,6 +93,15 @@
             </el-select>
           </el-form-item>
 
+          <el-form-item :label="$t('dashboard.form.outputFormat')" prop="output_format">
+            <el-select v-model="configForm.output_format" :placeholder="$t('dashboard.form.outputFormatPlaceholder')">
+              <el-option :label="$t('dashboard.form.outputFormatNone')" value="none" />
+              <el-option :label="$t('dashboard.form.outputFormatOpenai')" value="openai" />
+              <el-option :label="$t('dashboard.form.outputFormatAnthropic')" value="anthropic" />
+              <el-option :label="$t('dashboard.form.outputFormatGemini')" value="gemini" />
+            </el-select>
+          </el-form-item>
+
           <el-form-item :label="$t('dashboard.form.targetBaseUrl')" prop="target_base_url">
             <el-input v-model="configForm.target_base_url" :placeholder="$t('dashboard.form.targetBaseUrlPlaceholder')" />
           </el-form-item>
@@ -176,6 +185,7 @@ const initialFormState = {
   slug: '',
   method: 'GET',
   api_format: 'openai_compatible',
+  output_format: 'none',
   target_url: '',
   target_base_url: '',
   api_key_location: 'header',
@@ -252,6 +262,7 @@ const submitForm = async () => {
           api_key_location: configForm.api_key_location,
           api_key_name: configForm.api_key_name,
           api_format: configForm.config_type === 'LLM' ? configForm.api_format : null,
+          output_format: configForm.config_type === 'LLM' ? configForm.output_format : null,
           target_base_url: configForm.config_type === 'LLM' ? configForm.target_base_url : null,
         };
 
