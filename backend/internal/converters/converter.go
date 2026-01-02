@@ -1,77 +1,123 @@
 package converters
 
 import (
-	"encoding/json"
 	"fmt"
-	"strings"
+
+	"api-key-rotator/backend/internal/converters/formats"
+	// Import format packages to trigger their init() registration
+	_ "api-key-rotator/backend/internal/converters/formats/anthropic"
+	_ "api-key-rotator/backend/internal/converters/formats/gemini"
+	_ "api-key-rotator/backend/internal/converters/formats/openai"
 )
 
-// ResponseConverter interface for format conversion
-type ResponseConverter interface {
-	// Convert transforms a complete (non-streaming) response body
-	Convert(body []byte) ([]byte, error)
-	// ConvertStreamChunk transforms a single SSE chunk's JSON payload
-	ConvertStreamChunk(chunk []byte) ([]byte, error)
-	// GetContentType returns the content type for the converted response
-	GetContentType() string
+// Converter handles format conversion between different LLM API formats
+type Converter struct {
+	from       formats.FormatHandler
+	to         formats.FormatHandler
+	fromStream formats.StreamHandler
+	toStream   formats.StreamHandler
 }
 
-// PassthroughConverter returns the response as-is without conversion
-type PassthroughConverter struct{}
+// NewConverter creates a new converter between two formats
+// fromFormat and toFormat should be format names like "openai", "anthropic", "gemini"
+func NewConverter(fromFormat, toFormat string) (*Converter, error) {
+	// Normalize format names
+	fromFormat = NormalizeFormat(fromFormat)
+	toFormat = NormalizeFormat(toFormat)
 
-func (c *PassthroughConverter) Convert(body []byte) ([]byte, error) {
-	return body, nil
-}
-
-func (c *PassthroughConverter) ConvertStreamChunk(chunk []byte) ([]byte, error) {
-	return chunk, nil
-}
-
-func (c *PassthroughConverter) GetContentType() string {
-	return "application/json"
-}
-
-// NewResponseConverter creates a converter based on input and output formats
-// inputFormat: the format of the upstream API response (openai_compatible, anthropic_native, gemini_native)
-// outputFormat: the desired output format (none, openai, anthropic, gemini)
-func NewResponseConverter(inputFormat, outputFormat string) ResponseConverter {
-	// Normalize input format to match output format naming
-	normalizedInput := NormalizeFormat(inputFormat)
-
-	// If no conversion needed or same format, use passthrough
-	if outputFormat == "none" || outputFormat == "" || normalizedInput == outputFormat {
-		return &PassthroughConverter{}
+	// Get handlers from registry
+	fromInfo, err := formats.GetFormat(fromFormat)
+	if err != nil {
+		return nil, fmt.Errorf("source format error: %w", err)
 	}
 
-	// Select appropriate converter based on input → output combination
-	switch {
-	case normalizedInput == "openai" && outputFormat == "anthropic":
-		return &OpenAIToAnthropicConverter{}
-	case normalizedInput == "openai" && outputFormat == "gemini":
-		return &OpenAIToGeminiConverter{}
-	case normalizedInput == "anthropic" && outputFormat == "openai":
-		return &AnthropicToOpenAIConverter{}
-	case normalizedInput == "gemini" && outputFormat == "openai":
-		return &GeminiToOpenAIConverter{}
-	case normalizedInput == "anthropic" && outputFormat == "gemini":
-		// anthropic → gemini: chain through openai
-		return &ChainedConverter{
-			first:  &AnthropicToOpenAIConverter{},
-			second: &OpenAIToGeminiConverter{},
-		}
-	case normalizedInput == "gemini" && outputFormat == "anthropic":
-		// gemini → anthropic: chain through openai
-		return &ChainedConverter{
-			first:  &GeminiToOpenAIConverter{},
-			second: &OpenAIToAnthropicConverter{},
-		}
-	default:
-		// Unsupported conversion, use passthrough
-		return &PassthroughConverter{}
+	toInfo, err := formats.GetFormat(toFormat)
+	if err != nil {
+		return nil, fmt.Errorf("target format error: %w", err)
 	}
+
+	return &Converter{
+		from:       fromInfo.Handler,
+		to:         toInfo.Handler,
+		fromStream: fromInfo.StreamHandler,
+		toStream:   toInfo.StreamHandler,
+	}, nil
 }
 
-// NormalizeFormat converts api_format values to client_format naming convention
+// ConvertRequest converts a request from source format to target format
+func (c *Converter) ConvertRequest(body []byte) ([]byte, error) {
+	// Parse source format to universal
+	universal, err := c.from.ParseRequest(body)
+	if err != nil {
+		return nil, fmt.Errorf("parse request error: %w", err)
+	}
+
+	// Build target format from universal
+	result, err := c.to.BuildRequest(universal)
+	if err != nil {
+		return nil, fmt.Errorf("build request error: %w", err)
+	}
+
+	return result, nil
+}
+
+// ConvertResponse converts a response from source format to target format
+func (c *Converter) ConvertResponse(body []byte) ([]byte, error) {
+	// Parse source format to universal
+	universal, err := c.from.ParseResponse(body)
+	if err != nil {
+		return nil, fmt.Errorf("parse response error: %w", err)
+	}
+
+	// Build target format from universal
+	result, err := c.to.BuildResponse(universal)
+	if err != nil {
+		return nil, fmt.Errorf("build response error: %w", err)
+	}
+
+	return result, nil
+}
+
+// ConvertStreamChunk converts a streaming chunk from source format to target format
+func (c *Converter) ConvertStreamChunk(chunk []byte) ([]byte, error) {
+	// Parse source format to universal
+	universal, err := c.fromStream.ParseStreamChunk(chunk)
+	if err != nil {
+		return nil, fmt.Errorf("parse stream chunk error: %w", err)
+	}
+
+	// Skip empty chunks
+	if universal.Delta == "" && universal.StopReason == nil && !universal.IsFirst && !universal.IsLast {
+		return nil, nil
+	}
+
+	// Build target format from universal
+	result, err := c.toStream.BuildStreamChunk(universal)
+	if err != nil {
+		return nil, fmt.Errorf("build stream chunk error: %w", err)
+	}
+
+	return result, nil
+}
+
+// GetTargetPath converts a client action path to the target API path
+func (c *Converter) GetTargetPath(action string) string {
+	// First convert from client format's perspective
+	// Then convert to target format's API path
+	return c.to.GetAPIPath(action)
+}
+
+// GetStreamStartEvents returns the start events needed for the target format
+func (c *Converter) GetStreamStartEvents(model, id string) [][]byte {
+	return c.toStream.BuildStartEvent(model, id)
+}
+
+// GetStreamEndEvents returns the end events needed for the target format
+func (c *Converter) GetStreamEndEvents() [][]byte {
+	return c.toStream.BuildEndEvent()
+}
+
+// NormalizeFormat converts api_format values to standard format names
 func NormalizeFormat(format string) string {
 	switch format {
 	case "openai_compatible":
@@ -85,55 +131,11 @@ func NormalizeFormat(format string) string {
 	}
 }
 
-// ChainedConverter chains two converters together
-type ChainedConverter struct {
-	first  ResponseConverter
-	second ResponseConverter
-}
-
-func (c *ChainedConverter) Convert(body []byte) ([]byte, error) {
-	intermediate, err := c.first.Convert(body)
-	if err != nil {
-		return nil, err
+// NeedsConversion checks if conversion is needed between two formats
+func NeedsConversion(clientFormat, apiFormat string) bool {
+	if clientFormat == "none" || clientFormat == "" {
+		return false
 	}
-	return c.second.Convert(intermediate)
-}
-
-func (c *ChainedConverter) ConvertStreamChunk(chunk []byte) ([]byte, error) {
-	intermediate, err := c.first.ConvertStreamChunk(chunk)
-	if err != nil {
-		return nil, err
-	}
-	return c.second.ConvertStreamChunk(intermediate)
-}
-
-func (c *ChainedConverter) GetContentType() string {
-	return c.second.GetContentType()
-}
-
-// Helper function to parse SSE data line
-func ParseSSEChunk(data []byte) ([]byte, bool) {
-	str := strings.TrimSpace(string(data))
-	if strings.HasPrefix(str, "data: ") {
-		payload := strings.TrimPrefix(str, "data: ")
-		if payload == "[DONE]" {
-			return nil, false
-		}
-		return []byte(payload), true
-	}
-	return nil, false
-}
-
-// Helper function to format SSE data line
-func FormatSSEChunk(data []byte) []byte {
-	return []byte(fmt.Sprintf("data: %s\n\n", string(data)))
-}
-
-// Common JSON helper
-func parseJSON(data []byte, v interface{}) error {
-	return json.Unmarshal(data, v)
-}
-
-func toJSON(v interface{}) ([]byte, error) {
-	return json.Marshal(v)
+	normalizedAPI := NormalizeFormat(apiFormat)
+	return clientFormat != normalizedAPI
 }

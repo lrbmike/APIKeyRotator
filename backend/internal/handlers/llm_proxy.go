@@ -3,6 +3,7 @@ package handlers
 import (
 	"bufio"
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
@@ -82,8 +83,8 @@ func (h *LLMProxyHandler) prepareLLMRequest(c *gin.Context, slug, action string)
 		clientFormat = *proxyConfig.OutputFormat
 	}
 
-	// 3. 检查是否需要请求格式转换
-	needRequestConversion := clientFormat != "none" && clientFormat != "" && clientFormat != converters.NormalizeFormat(apiFormat)
+	// 3. 检查是否需要格式转换
+	needConversion := converters.NeedsConversion(clientFormat, apiFormat)
 
 	// 4. 读取请求体
 	bodyBytes, err := io.ReadAll(c.Request.Body)
@@ -93,13 +94,16 @@ func (h *LLMProxyHandler) prepareLLMRequest(c *gin.Context, slug, action string)
 
 	// 5. 如果需要，转换请求格式
 	convertedAction := action
-	if needRequestConversion {
+	if needConversion {
 		logger.Infof("Request format conversion enabled: %s -> %s", clientFormat, apiFormat)
 
-		requestConverter := converters.NewRequestConverter(clientFormat, apiFormat)
+		converter, err := converters.NewConverter(clientFormat, apiFormat)
+		if err != nil {
+			return nil, nil, fmt.Errorf("failed to create converter: %w", err)
+		}
 
 		// 转换请求体
-		convertedBody, err := requestConverter.Convert(bodyBytes)
+		convertedBody, err := converter.ConvertRequest(bodyBytes)
 		if err != nil {
 			logger.Errorf("Failed to convert request: %v", err)
 			return nil, nil, fmt.Errorf("failed to convert request format: %w", err)
@@ -107,7 +111,16 @@ func (h *LLMProxyHandler) prepareLLMRequest(c *gin.Context, slug, action string)
 		bodyBytes = convertedBody
 
 		// 转换请求路径
-		convertedAction = requestConverter.GetTargetPath(action)
+		convertedAction = converter.GetTargetPath(action)
+
+		// 如果路径包含 {model} 占位符，从请求体中提取模型名并替换
+		if strings.Contains(convertedAction, "{model}") {
+			model := extractModelFromBody(bodyBytes)
+			if model != "" {
+				convertedAction = strings.ReplaceAll(convertedAction, "{model}", model)
+			}
+		}
+
 		logger.Infof("Converted action path: %s -> %s", action, convertedAction)
 	}
 
@@ -178,21 +191,26 @@ func (h *LLMProxyHandler) forwardLLMRequest(c *gin.Context, target *services.Tar
 
 	logger.Infof("Received response from target with status code: %d", resp.StatusCode)
 
-	// 获取输入输出格式，创建响应转换器
-	inputFormat := "openai_compatible"
+	// 获取格式配置，创建转换器
+	apiFormat := "openai_compatible"
 	if proxyConfig.APIFormat != nil {
-		inputFormat = *proxyConfig.APIFormat
+		apiFormat = *proxyConfig.APIFormat
 	}
 	clientFormat := "none"
 	if proxyConfig.OutputFormat != nil {
 		clientFormat = *proxyConfig.OutputFormat
 	}
 
-	responseConverter := converters.NewResponseConverter(inputFormat, clientFormat)
-	needConversion := clientFormat != "none" && clientFormat != "" && clientFormat != converters.NormalizeFormat(inputFormat)
-
+	needConversion := converters.NeedsConversion(clientFormat, apiFormat)
+	var converter *converters.Converter
 	if needConversion {
-		logger.Infof("Response format conversion enabled: %s -> %s", inputFormat, clientFormat)
+		converter, err = converters.NewConverter(apiFormat, clientFormat)
+		if err != nil {
+			logger.Errorf("Failed to create response converter: %v", err)
+			needConversion = false
+		} else {
+			logger.Infof("Response format conversion enabled: %s -> %s", apiFormat, clientFormat)
+		}
 	}
 
 	// 过滤响应头
@@ -212,9 +230,9 @@ func (h *LLMProxyHandler) forwardLLMRequest(c *gin.Context, target *services.Tar
 		c.Header("Connection", "keep-alive")
 		c.Status(resp.StatusCode)
 
-		if needConversion {
+		if needConversion && converter != nil {
 			// 带转换的流式响应
-			return h.forwardStreamWithConversion(c, resp.Body, responseConverter)
+			return h.forwardStreamWithConversion(c, resp.Body, converter)
 		} else {
 			// 直接透传流式响应
 			return h.forwardStreamDirect(c, resp.Body)
@@ -226,18 +244,15 @@ func (h *LLMProxyHandler) forwardLLMRequest(c *gin.Context, target *services.Tar
 			return fmt.Errorf("failed to read response body: %w", err)
 		}
 
-		logger.Infof("Original response body (first 500 chars): %s", truncateString(string(body), 500))
-
-		if needConversion {
+		if needConversion && converter != nil {
 			// 转换响应格式
-			convertedBody, err := responseConverter.Convert(body)
+			convertedBody, err := converter.ConvertResponse(body)
 			if err != nil {
 				logger.Errorf("Failed to convert response: %v", err)
 				// 转换失败时返回原始响应
 				c.Data(resp.StatusCode, contentType, body)
 				return nil
 			}
-			logger.Infof("Converted response body (first 500 chars): %s", truncateString(string(convertedBody), 500))
 			c.Data(resp.StatusCode, "application/json", convertedBody)
 		} else {
 			c.Data(resp.StatusCode, contentType, body)
@@ -265,7 +280,7 @@ func (h *LLMProxyHandler) forwardStreamDirect(c *gin.Context, body io.Reader) er
 }
 
 // forwardStreamWithConversion 带格式转换的流式响应
-func (h *LLMProxyHandler) forwardStreamWithConversion(c *gin.Context, body io.Reader, converter converters.ResponseConverter) error {
+func (h *LLMProxyHandler) forwardStreamWithConversion(c *gin.Context, body io.Reader, converter *converters.Converter) error {
 	scanner := bufio.NewScanner(body)
 	// 增加缓冲区大小以处理大的SSE消息
 	buf := make([]byte, 64*1024)
@@ -326,10 +341,16 @@ func (h *LLMProxyHandler) forwardStreamWithConversion(c *gin.Context, body io.Re
 	return nil
 }
 
-// truncateString truncates a string to maxLen characters for logging
-func truncateString(s string, maxLen int) string {
-	if len(s) <= maxLen {
-		return s
+// extractModelFromBody extracts the model name from a request body
+func extractModelFromBody(body []byte) string {
+	var req map[string]interface{}
+	if err := json.Unmarshal(body, &req); err != nil {
+		return ""
 	}
-	return s[:maxLen] + "..."
+
+	if model, ok := req["model"].(string); ok {
+		return model
+	}
+
+	return ""
 }
