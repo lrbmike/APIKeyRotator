@@ -8,6 +8,7 @@ import (
 	_ "api-key-rotator/backend/internal/converters/formats/anthropic"
 	_ "api-key-rotator/backend/internal/converters/formats/gemini"
 	_ "api-key-rotator/backend/internal/converters/formats/openai"
+	_ "api-key-rotator/backend/internal/converters/formats/openai_responses"
 )
 
 // Converter handles format conversion between different LLM API formats

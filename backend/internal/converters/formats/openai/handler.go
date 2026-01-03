@@ -198,12 +198,25 @@ func (h *Handler) BuildResponse(resp *formats.UniversalResponse) ([]byte, error)
 	return json.Marshal(openaiResp)
 }
 
-// GetAPIPath implements FormatHandler
+// GetAPIPath implements FormatHandler - converts client action to OpenAI API path
 func (h *Handler) GetAPIPath(action string) string {
-	return action
+	switch action {
+	case "v1/messages", "messages":
+		// Anthropic endpoint -> OpenAI endpoint
+		return "chat/completions"
+	case "v1/chat/completions":
+		return "chat/completions"
+	default:
+		return action
+	}
 }
 
-// GetClientAction implements FormatHandler
+// GetClientAction implements FormatHandler - converts API path to client action
 func (h *Handler) GetClientAction(apiPath string) string {
-	return apiPath
+	switch apiPath {
+	case "chat/completions", "v1/chat/completions":
+		return "v1/chat/completions"
+	default:
+		return apiPath
+	}
 }

@@ -62,7 +62,7 @@ func (a *AnthropicAdapter) ProcessRequest() (*services.TargetRequest, error) {
 	}
 
 	// 3. Build the target request.
-	headers := utils.FilterRequestHeaders(a.c.Request.Header, []string{"x-api-key", "Authorization", "x-anthropic-api-key"})
+	headers := utils.FilterRequestHeaders(a.c.Request.Header, []string{"x-api-key", "Authorization", "x-anthropic-api-key", "accept-encoding"})
 
 	// 优先使用数据库中为该proxyConfig保存的APIKeyName, 否则回退到默认值
 	keyName := "x-api-key"

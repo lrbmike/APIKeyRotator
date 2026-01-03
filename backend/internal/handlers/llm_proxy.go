@@ -3,6 +3,7 @@ package handlers
 import (
 	"bufio"
 	"bytes"
+	"compress/gzip"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -96,6 +97,7 @@ func (h *LLMProxyHandler) prepareLLMRequest(c *gin.Context, slug, action string)
 	convertedAction := action
 	if needConversion {
 		logger.Infof("Request format conversion enabled: %s -> %s", clientFormat, apiFormat)
+		logger.Infof("Original request body: %s", string(bodyBytes))
 
 		converter, err := converters.NewConverter(clientFormat, apiFormat)
 		if err != nil {
@@ -109,6 +111,7 @@ func (h *LLMProxyHandler) prepareLLMRequest(c *gin.Context, slug, action string)
 			return nil, nil, fmt.Errorf("failed to convert request format: %w", err)
 		}
 		bodyBytes = convertedBody
+		logger.Infof("Converted request body: %s", string(bodyBytes))
 
 		// 转换请求路径
 		convertedAction = converter.GetTargetPath(action)
@@ -239,12 +242,33 @@ func (h *LLMProxyHandler) forwardLLMRequest(c *gin.Context, target *services.Tar
 		}
 	} else {
 		// 普通响应处理
-		body, err := io.ReadAll(resp.Body)
+		var bodyReader io.Reader = resp.Body
+
+		// 检查是否是gzip压缩的响应
+		if resp.Header.Get("Content-Encoding") == "gzip" {
+			gzReader, err := gzip.NewReader(resp.Body)
+			if err != nil {
+				return fmt.Errorf("failed to create gzip reader: %w", err)
+			}
+			defer gzReader.Close()
+			bodyReader = gzReader
+			logger.Infof("Response is gzip compressed, decompressing...")
+		}
+
+		body, err := io.ReadAll(bodyReader)
 		if err != nil {
 			return fmt.Errorf("failed to read response body: %w", err)
 		}
 
+		// 如果是错误响应，打印详细日志
+		if resp.StatusCode >= 400 {
+			logger.Errorf("Target server returned error %d: %s", resp.StatusCode, string(body))
+		}
+
 		if needConversion && converter != nil {
+			// 调试日志：打印原始响应内容
+			logger.Infof("Original response body (first 500 chars): %s", truncateString(string(body), 500))
+
 			// 转换响应格式
 			convertedBody, err := converter.ConvertResponse(body)
 			if err != nil {
@@ -353,4 +377,12 @@ func extractModelFromBody(body []byte) string {
 	}
 
 	return ""
+}
+
+// truncateString truncates a string to the specified max length
+func truncateString(s string, maxLen int) string {
+	if len(s) <= maxLen {
+		return s
+	}
+	return s[:maxLen] + "..."
 }

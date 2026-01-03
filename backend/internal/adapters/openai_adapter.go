@@ -6,8 +6,8 @@ import (
 	"io"
 	"strings"
 
-	"api-key-rotator/backend/internal/infrastructure/cache"
 	"api-key-rotator/backend/internal/config"
+	"api-key-rotator/backend/internal/infrastructure/cache"
 	"api-key-rotator/backend/internal/logger"
 	"api-key-rotator/backend/internal/models"
 	"api-key-rotator/backend/internal/services"
@@ -87,7 +87,7 @@ func (a *OpenAIAdapter) ProcessRequest() (*services.TargetRequest, error) {
 	}
 
 	// 3. 构建目标请求 (偷梁换柱)
-	headers := utils.FilterRequestHeaders(a.c.Request.Header, []string{"authorization"})
+	headers := utils.FilterRequestHeaders(a.c.Request.Header, []string{"authorization", "accept-encoding"})
 
 	// 优先使用数据库中为该proxyConfig保存的APIKeyName, 否则回退到默认值
 	keyName := "Authorization"

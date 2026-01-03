@@ -93,10 +93,17 @@
             </el-select>
           </el-form-item>
 
-          <el-form-item :label="$t('dashboard.form.outputFormat')" prop="output_format">
+          <el-form-item prop="output_format">
+            <template #label>
+              {{ $t('dashboard.form.outputFormat') }}
+              <el-tooltip :content="$t('dashboard.form.outputFormatHelpText')" placement="top" :show-after="200">
+                <el-icon class="help-icon"><QuestionFilled /></el-icon>
+              </el-tooltip>
+            </template>
             <el-select v-model="configForm.output_format" :placeholder="$t('dashboard.form.outputFormatPlaceholder')">
               <el-option :label="$t('dashboard.form.outputFormatNone')" value="none" />
               <el-option :label="$t('dashboard.form.outputFormatOpenai')" value="openai" />
+              <el-option :label="$t('dashboard.form.outputFormatOpenaiResponses')" value="openai_responses" />
               <el-option :label="$t('dashboard.form.outputFormatAnthropic')" value="anthropic" />
               <el-option :label="$t('dashboard.form.outputFormatGemini')" value="gemini" />
             </el-select>
@@ -148,6 +155,7 @@ import {
   updateConfigStatus
 } from '../api'
 import { ElMessage } from 'element-plus'
+import { QuestionFilled } from '@element-plus/icons-vue'
 import KeyManager from '../components/KeyManager.vue'
 
 const { t } = useI18n()
@@ -416,5 +424,14 @@ onMounted(() => {
 }
 .action-buttons-horizontal .el-button {
   margin-left: 0 !important;
+}
+.help-icon {
+  margin-left: 4px;
+  color: #909399;
+  cursor: pointer;
+  vertical-align: middle;
+}
+.help-icon:hover {
+  color: #409eff;
 }
 </style>

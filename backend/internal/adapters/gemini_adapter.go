@@ -5,8 +5,8 @@ import (
 	"io"
 	"strings"
 
-	"api-key-rotator/backend/internal/infrastructure/cache"
 	"api-key-rotator/backend/internal/config"
+	"api-key-rotator/backend/internal/infrastructure/cache"
 	"api-key-rotator/backend/internal/logger"
 	"api-key-rotator/backend/internal/models"
 	"api-key-rotator/backend/internal/services"
@@ -33,7 +33,7 @@ func NewGeminiAdapter(cfg *config.Config, db *gorm.DB, cacheClient cache.CacheIn
 func (a *GeminiAdapter) ProcessRequest() (*services.TargetRequest, error) {
 	// 1. 代理访问认证 (劫持 'x-goog-api-key' Header)
 	proxyKey := a.c.GetHeader("x-goog-api-key")
-	
+
 	validKeys := a.cfg.GetGlobalProxyKeys()
 	isValidKey := false
 	for _, key := range validKeys {
@@ -45,7 +45,7 @@ func (a *GeminiAdapter) ProcessRequest() (*services.TargetRequest, error) {
 	if !isValidKey {
 		return nil, fmt.Errorf("invalid Proxy Key. Provide it via the 'key' URL query parameter")
 	}
-	
+
 	// 2. 轮询上游密钥
 	upstreamKey, err := a.RotateUpstreamKey()
 	if err != nil {
@@ -53,7 +53,7 @@ func (a *GeminiAdapter) ProcessRequest() (*services.TargetRequest, error) {
 	}
 
 	// 3. 构建目标请求 (偷梁换柱)
-	headers := utils.FilterRequestHeaders(a.c.Request.Header, []string{"x-goog-api-key"})
+	headers := utils.FilterRequestHeaders(a.c.Request.Header, []string{"x-goog-api-key", "accept-encoding"})
 
 	// 优先使用数据库中为该proxyConfig保存的APIKeyName, 否则回退到默认值
 	keyName := "x-goog-api-key"
