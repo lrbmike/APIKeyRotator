@@ -268,3 +268,102 @@ DATABASE_URL=postgres://user:password@localhost:5432/dbname?sslmode=disable
 Add PostgreSQL build support in Dockerfile, similar to existing MySQL and SQLite builds.
 
 This extension approach maintains the integrity of the existing architecture while providing flexible database support.
+
+### Adding New LLM Adapters (Adapters)
+
+Adapters are responsible for handling direct communication with upstream LLM APIs, including request building, authentication, and key rotation. Core code is located in `backend/internal/adapters`.
+
+#### 1. Define Adapter Structure
+Implement the `LLMAdapter` interface:
+
+```go
+type LLMAdapter interface {
+    ProcessRequest() (*services.TargetRequest, error)
+}
+```
+
+#### 2. Implement Core Logic
+Embed `BaseLLMAdapter` to reuse common logic (like key rotation):
+
+```go
+type XAIAdapter struct {
+    *BaseLLMAdapter
+}
+
+func (a *XAIAdapter) ProcessRequest() (*services.TargetRequest, error) {
+    // 1. Verify Proxy Key
+    // 2. Rotate Upstream Key
+    upstreamKey, err := a.RotateUpstreamKey()
+    
+    // 3. Build Request (Filtering headers, removing gzip, etc.)
+    headers := utils.FilterRequestHeaders(a.c.Request.Header, []string{"authorization", "accept-encoding"})
+    headers["Authorization"] = "Bearer " + upstreamKey
+    
+    // 4. Return TargetRequest object
+    return &services.TargetRequest{...}, nil
+}
+```
+
+### Extending New API Formats (Converters)
+
+Converters are responsible for handling transformations between client-side formats and backend API expected formats. Core code is located in `backend/internal/converters`.
+
+#### 1. Register New Format
+Register the new format identifier in `backend/internal/converters/formats/registry.go`:
+
+```go
+// Example: Adding a new format identifier
+const (
+    FormatClaudeNative = "claude_native"
+)
+```
+
+#### 2. Implement Format Handler
+Implement the `FormatHandler` interface in `backend/internal/converters/formats/claude_native/`:
+
+```go
+type ClaudeNativeHandler struct{}
+
+// Build Request: Convert universal request format to Claude native format
+func (h *ClaudeNativeHandler) BuildRequest(req *types.UniversalRequest) ([]byte, error) {
+    // Implement conversion logic...
+}
+
+// Parse Response: Convert Claude native response to universal response format
+func (h *ClaudeNativeHandler) ParseResponse(body []byte) (*types.UniversalResponse, error) {
+    // Implement parsing logic...
+}
+```
+
+#### 3. Handle Streaming Responses (Optional)
+If streaming support is required, implement the `StreamHandler` interface to handle SSE (Server-Sent Events) transformations. This is critical for chat interaction experiences.
+
+```go
+type StreamHandler interface {
+    // Parse stream chunk: Parse format-specific SSE data line into universal stream chunk
+    ParseStreamChunk(chunk []byte) (*UniversalStreamChunk, error)
+    
+    // Build stream chunk: Build format-specific SSE data line from universal stream chunk
+    BuildStreamChunk(chunk *UniversalStreamChunk) ([]byte, error)
+    
+    // Build start event (e.g., OpenAI's role delta)
+    BuildStartEvent(model string, id string) [][]byte
+    
+    // Build end event (e.g., [DONE])
+    BuildEndEvent() [][]byte
+}
+```
+
+Implementation Example:
+
+```go
+func (h *ClaudeStreamHandler) ParseStreamChunk(chunk []byte) (*UniversalStreamChunk, error) {
+    // 1. Parse SSE line (e.g., "data: {...}")
+    // 2. Extract content delta
+    // 3. Construct UniversalStreamChunk
+    return &UniversalStreamChunk{
+        Content: deltaContent,
+        FinishReason: finishReason,
+    }, nil
+}
+```

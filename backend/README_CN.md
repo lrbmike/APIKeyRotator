@@ -270,3 +270,102 @@ DATABASE_URL=postgres://user:password@localhost:5432/dbname?sslmode=disable
 在Dockerfile中添加PostgreSQL构建支持，类似于现有的MySQL和SQLite构建。
 
 这样的扩展方式保持了现有架构的完整性，同时提供了灵活的数据库支持。
+
+### 接入新的LLM适配器 (Adapters)
+
+适配器负责处理与上游 LLM API 的直接通信，包括请求构建、认证和密钥轮询。核心代码位于 `backend/internal/adapters`。
+
+#### 1. 定义适配器结构
+实现 `LLMAdapter` 接口：
+
+```go
+type LLMAdapter interface {
+    ProcessRequest() (*services.TargetRequest, error)
+}
+```
+
+#### 2. 实现核心逻辑
+继承 `BaseLLMAdapter` 以复用通用逻辑（如密钥轮询）：
+
+```go
+type XAIAdapter struct {
+    *BaseLLMAdapter
+}
+
+func (a *XAIAdapter) ProcessRequest() (*services.TargetRequest, error) {
+    // 1. 验证代理密钥 (Proxy Key)
+    // 2. 轮询上游密钥 (Upstream Key)
+    upstreamKey, err := a.RotateUpstreamKey()
+    
+    // 3. 构建请求 (Header处理，移除 Gzip 等)
+    headers := utils.FilterRequestHeaders(a.c.Request.Header, []string{"authorization", "accept-encoding"})
+    headers["Authorization"] = "Bearer " + upstreamKey
+    
+    // 4. 返回目标请求对象
+    return &services.TargetRequest{...}, nil
+}
+```
+
+### 扩展新的API格式 (Converters)
+
+转换器负责处理客户端格式与后端 API 期望格式之间的相互转换。核心代码位于 `backend/internal/converters`。
+
+#### 1. 注册新格式
+在 `backend/internal/converters/formats/registry.go` 中注册新的格式标识：
+
+```go
+// 示例：添加新的格式标识
+const (
+    FormatClaudeNative = "claude_native"
+)
+```
+
+#### 2. 实现格式处理器
+在 `backend/internal/converters/formats/claude_native/` 下实现 `FormatHandler` 接口：
+
+```go
+type ClaudeNativeHandler struct{}
+
+// 转换请求：将通用请求格式转换为 Claude 原生格式
+func (h *ClaudeNativeHandler) BuildRequest(req *types.UniversalRequest) ([]byte, error) {
+    // 实现转换逻辑...
+}
+
+// 转换响应：将 Claude 原生响应转换为通用响应格式
+func (h *ClaudeNativeHandler) ParseResponse(body []byte) (*types.UniversalResponse, error) {
+    // 实现解析逻辑...
+}
+```
+
+#### 3. 处理流式响应 (可选)
+如果需要支持流式传输，还需实现 `StreamHandler` 接口以处理 SSE (Server-Sent Events) 转换。这对于聊天交互体验至关重要。
+
+```go
+type StreamHandler interface {
+    // 解析流分块：将特定格式的 SSE 数据行解析为通用流分块
+    ParseStreamChunk(chunk []byte) (*UniversalStreamChunk, error)
+    
+    // 构建流分块：将通用流分块构建为特定格式的 SSE 数据行
+    BuildStreamChunk(chunk *UniversalStreamChunk) ([]byte, error)
+    
+    // 构建起始事件 (如 OpenAI 的 role delta)
+    BuildStartEvent(model string, id string) [][]byte
+    
+    // 构建结束事件 (如 [DONE])
+    BuildEndEvent() [][]byte
+}
+```
+
+实现示例：
+
+```go
+func (h *ClaudeStreamHandler) ParseStreamChunk(chunk []byte) (*UniversalStreamChunk, error) {
+    // 1. 解析 SSE 行 (e.g., "data: {...}")
+    // 2. 提取 content delta
+    // 3. 构造 UniversalStreamChunk
+    return &UniversalStreamChunk{
+        Content: deltaContent,
+        FinishReason: finishReason,
+    }, nil
+}
+```
