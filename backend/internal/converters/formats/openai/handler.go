@@ -204,6 +204,9 @@ func (h *Handler) GetAPIPath(action string) string {
 	case "v1/messages", "messages":
 		// Anthropic endpoint -> OpenAI endpoint
 		return "chat/completions"
+	case "v1/responses", "responses":
+		// Copilot/Codex endpoint -> OpenAI endpoint
+		return "chat/completions"
 	case "v1/chat/completions":
 		return "chat/completions"
 	default:
